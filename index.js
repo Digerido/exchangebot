@@ -9,7 +9,7 @@ const getBaseUrl = process.env.GETBASEURL; // Замените на ваш ба�
 const bot = new TelegramBot(token, { polling: true });
 const valutes = await fetch(`${getBaseUrl}/api/public/valutes`).then(res => res.json());
 const crossRatesList = await fetch(`${getBaseUrl}/api/public/cross-rates`).then(res => res.json());
-let choosenValuteStatus;
+let status;
 const crossRates = crossRatesList.result.filter((cr) => {
   return cr.isDisabled === false;
 });
@@ -31,10 +31,10 @@ const directExchangeRate = () => {
       cr.to.bestchangeKey === getValute.bestchangeKey
     );
   });
-  console.log('crossRate = ',crossRate)
+  console.log('crossRate = ', crossRate)
   if (crossRate) return 1 / crossRate.out;
-  console.log('calc = ',(getValute.percentGet * getValute.course) /
-  (giveValute.percentGive * giveValute.course))
+  console.log('calc = ', (getValute.percentGet * getValute.course) /
+    (giveValute.percentGive * giveValute.course))
   return (
     getValute &&
     giveValute &&
@@ -57,17 +57,32 @@ const calculateGetAmount = () => {
 };
 
 
-function setGiveAmount(value) {    
+function setGiveAmount(value) {
   const fixedValue = (+value).toFixed(getFixFactor(giveValute));
   giveAmount = parseFloat(fixedValue);
   getAmount = calculateGetAmount();
 }
 
+
+function prepareToPay(chatId) {
+  console.log('start');
+  const prepareToPayList = {
+    reply_markup: JSON.stringify({
+      inline_keyboard: [
+        [{ text: 'Да', callback_data: 'yes' }],
+        [{ text: 'Назад', callback_data: 'back' }]
+      ]
+    })
+  };
+  console.log(prepareToPayList);
+  status = 'isPrepareToPay';
+  bot.sendMessage(chatId, 'Подготовка к оплате', prepareToPayList);
+}
 // 1)При /start отдаем валюту
 async function selectGiveValute(chatId) {
   const valuteList = valutes.result.filter(valute => valute.isGive === true)
     .map(valute => ([{ text: valute.title, callback_data: valute.bestchangeKey }]));
-  choosenValuteStatus = 'isGive';
+  status = 'isGive';
   const dropdownValuteList = {
     reply_markup: JSON.stringify({
       inline_keyboard: valuteList
@@ -98,7 +113,7 @@ bot.on('message', async (msg) => {
       console.error('Error:', error);
     }
   }
-  else {
+  else if (status === 'isGet') {
     const userAmount = parseFloat(msg.text.replace(',', '.'))
     console.log(userAmount)
     if (giveValute?.minGive > userAmount) {
@@ -107,23 +122,28 @@ bot.on('message', async (msg) => {
     else {
       setGiveAmount(userAmount)
       bot.sendMessage(chatId, `Ваш обмен: ${giveAmount} ${giveValute?.key} к отправке ${getAmount} ${getValute?.key} к получению. Текущий курс ${giveValute?.course}/${getValute?.course}. Курс сделки будет зафиксирован в момент подтверждения отправки средств. Если подтверждаете ответьте - да`);
+      prepareToPay(chatId)
     }
+  }
+  else if (status === 'isPrepareToPay') {
+
   }
 })
 
 bot.on('callback_query', (query) => {
   const chatId = query.message.chat.id;
   let choosenValute = query.data;
-  if (choosenValuteStatus === 'isGive') {
-    console.log(choosenValuteStatus)
+  if (status === 'isGive') {
     giveValute = valutes.result.find(valute => valute.bestchangeKey === choosenValute)
-
     bot.sendMessage(chatId, `Вы выбрали вариант: ${giveValute.title}`);
     selectGetValute(chatId)
-    choosenValuteStatus = 'isGet'
+    status = 'isGet'
   }
-  else if (choosenValuteStatus === 'isGet') {
+  else if (status === 'isGet') {
     getValute = valutes.result.find(valute => valute.bestchangeKey === choosenValute)
     bot.sendMessage(chatId, `Вы выбрали направление: ${giveValute.title + ' -> ' + getValute.title}. Минимальная сумма к обмену ${giveValute.minGive + ' ' + giveValute.key} или ${getValute.minGive + ' ' + getValute.key} напишите сумму к обмену`);
+  }
+  else if (status === 'isPrepareToPay' && query.data === 'yes') {
+    bot.sendMessage(chatId, `Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.`);
   }
 });
