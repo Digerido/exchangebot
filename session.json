@@ -1,0 +1,518 @@
+{
+  "sessions": [
+    {
+      "id": "806824037:806824037",
+      "data": {
+        "giveValuteList": [
+          [
+            {
+              "text": "Тинькофф Банк",
+              "callback_data": "TCSBRUB"
+            }
+          ],
+          [
+            {
+              "text": "QIWI",
+              "callback_data": "QWRUB"
+            }
+          ],
+          [
+            {
+              "text": "Bitcoin",
+              "callback_data": "BTC"
+            }
+          ],
+          [
+            {
+              "text": "Monero",
+              "callback_data": "XMR"
+            }
+          ],
+          [
+            {
+              "text": "Dash",
+              "callback_data": "DASH"
+            }
+          ],
+          [
+            {
+              "text": "Ethereum",
+              "callback_data": "ETH"
+            }
+          ],
+          [
+            {
+              "text": "Visa/Master card RUB",
+              "callback_data": "CARDRUB"
+            }
+          ],
+          [
+            {
+              "text": "Tether USD ERC20",
+              "callback_data": "USDTERC"
+            }
+          ],
+          [
+            {
+              "text": "Tether USD TRC20",
+              "callback_data": "USDTTRC"
+            }
+          ],
+          [
+            {
+              "text": "Ripple",
+              "callback_data": "XRP"
+            }
+          ],
+          [
+            {
+              "text": "Tron",
+              "callback_data": "TRX"
+            }
+          ],
+          [
+            {
+              "text": "Dogecoin",
+              "callback_data": "DOGE"
+            }
+          ],
+          [
+            {
+              "text": "USD Coin",
+              "callback_data": "USDC"
+            }
+          ],
+          [
+            {
+              "text": "Polkadot",
+              "callback_data": "DOT"
+            }
+          ],
+          [
+            {
+              "text": "Bitcoin Cash",
+              "callback_data": "BCH"
+            }
+          ],
+          [
+            {
+              "text": "ChainLink",
+              "callback_data": "LINK"
+            }
+          ],
+          [
+            {
+              "text": "Uniswap",
+              "callback_data": "UNI"
+            }
+          ],
+          [
+            {
+              "text": "TrueUSD",
+              "callback_data": "TUSD"
+            }
+          ],
+          [
+            {
+              "text": "Waves",
+              "callback_data": "WAVES"
+            }
+          ],
+          [
+            {
+              "text": "0x",
+              "callback_data": "ZRX"
+            }
+          ],
+          [
+            {
+              "text": "ICON",
+              "callback_data": "ICX"
+            }
+          ]
+        ],
+        "getValuteList": [
+          [
+            {
+              "text": "Сбербанк",
+              "callback_data": "SBERRUB"
+            }
+          ],
+          [
+            {
+              "text": "Тинькофф Банк",
+              "callback_data": "TCSBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Альфабанк",
+              "callback_data": "ACRUB"
+            }
+          ],
+          [
+            {
+              "text": "ВТБ24",
+              "callback_data": "TBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Промсвязьбанк",
+              "callback_data": "PSBRUB"
+            }
+          ],
+          [
+            {
+              "text": "QIWI",
+              "callback_data": "QWRUB"
+            }
+          ],
+          [
+            {
+              "text": "Bitcoin",
+              "callback_data": "BTC"
+            }
+          ],
+          [
+            {
+              "text": "Monero",
+              "callback_data": "XMR"
+            }
+          ],
+          [
+            {
+              "text": "Dash",
+              "callback_data": "DASH"
+            }
+          ],
+          [
+            {
+              "text": "Ethereum",
+              "callback_data": "ETH"
+            }
+          ],
+          [
+            {
+              "text": "Открытие",
+              "callback_data": "OPNBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Райффайзен банк",
+              "callback_data": "RFBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Русский Стандарт",
+              "callback_data": "RUSSTRUB"
+            }
+          ],
+          [
+            {
+              "text": "Visa/Master card RUB",
+              "callback_data": "CARDRUB"
+            }
+          ],
+          [
+            {
+              "text": "Tether USD ERC20",
+              "callback_data": "USDTERC"
+            }
+          ],
+          [
+            {
+              "text": "Tether USD TRC20",
+              "callback_data": "USDTTRC"
+            }
+          ],
+          [
+            {
+              "text": "Ripple",
+              "callback_data": "XRP"
+            }
+          ],
+          [
+            {
+              "text": "Tron",
+              "callback_data": "TRX"
+            }
+          ],
+          [
+            {
+              "text": "Advanced Cash EUR",
+              "callback_data": "ADVCEUR"
+            }
+          ],
+          [
+            {
+              "text": "Dogecoin",
+              "callback_data": "DOGE"
+            }
+          ],
+          [
+            {
+              "text": "Polkadot",
+              "callback_data": "DOT"
+            }
+          ],
+          [
+            {
+              "text": "ChainLink",
+              "callback_data": "LINK"
+            }
+          ],
+          [
+            {
+              "text": "Uniswap",
+              "callback_data": "UNI"
+            }
+          ],
+          [
+            {
+              "text": "TrueUSD",
+              "callback_data": "TUSD"
+            }
+          ],
+          [
+            {
+              "text": "Waves",
+              "callback_data": "WAVES"
+            }
+          ],
+          [
+            {
+              "text": "0x",
+              "callback_data": "ZRX"
+            }
+          ],
+          [
+            {
+              "text": "ICON",
+              "callback_data": "ICX"
+            }
+          ],
+          [
+            {
+              "text": "Счет телефона RUB",
+              "callback_data": "MWRUB"
+            }
+          ],
+          [
+            {
+              "text": "Авангард",
+              "callback_data": "AVBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Газпромбанк",
+              "callback_data": "GPBRUB"
+            }
+          ],
+          [
+            {
+              "text": "РНКБ",
+              "callback_data": "RNKBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Почта Банк",
+              "callback_data": "POSTBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Россельхозбанк",
+              "callback_data": "RSHBRUB"
+            }
+          ],
+          [
+            {
+              "text": "РосБанк",
+              "callback_data": "ROSBRUB"
+            }
+          ],
+          [
+            {
+              "text": "МТС Банк",
+              "callback_data": "MTSBRUB"
+            }
+          ],
+          [
+            {
+              "text": "Карта МИР",
+              "callback_data": "MIRCRUB"
+            }
+          ],
+          [
+            {
+              "text": "Любой банк RUB",
+              "callback_data": "WIRERUB"
+            }
+          ],
+          [
+            {
+              "text": "Visa/MasterCard CNY",
+              "callback_data": "CARDCNY"
+            }
+          ],
+          [
+            {
+              "text": "Карта UnionPay",
+              "callback_data": "UPCNY"
+            }
+          ],
+          [
+            {
+              "text": "RUBC",
+              "callback_data": "RUBC"
+            }
+          ],
+          [
+            {
+              "text": "CASHRUB",
+              "callback_data": "CASHRUB"
+            }
+          ]
+        ],
+        "giveValute": {
+          "categories": [
+            "bank"
+          ],
+          "isGet": true,
+          "isGive": true,
+          "minGive": 25000,
+          "percentGive": 0.919,
+          "percentGet": 1.02,
+          "customPercents": [],
+          "course": 1,
+          "minfee": 0,
+          "isCash": false,
+          "limitPercentBuy": 1,
+          "limitPercentSell": 1,
+          "step": 0,
+          "limitPlace": 0,
+          "useWhitebitWallet": false,
+          "withdrawable": true,
+          "depositable": true,
+          "confirmations": null,
+          "withFirekassa": false,
+          "invoiceQw": true,
+          "invoiceCard": false,
+          "invoiceYou": false,
+          "giveWarn": null,
+          "getWarn": null,
+          "_id": "5c673268592883236a0bd0e9",
+          "title": "QIWI",
+          "key": "RUB",
+          "bestchangeKey": "QWRUB",
+          "image": "/uploads/valutes/qiwi_1550266984106.png",
+          "rawKey": "RUB",
+          "maxGet": "1783260.90",
+          "forms": [
+            {
+              "regexp": {
+                "value": "(.*)",
+                "flags": "gi"
+              },
+              "step": 1,
+              "placeholder": "Введите номер телефона",
+              "length": null,
+              "minLength": null,
+              "maxLength": null,
+              "required": true,
+              "_id": "5c7edeef3eaa212261201766",
+              "valuteId": "5c673268592883236a0bd0e9",
+              "type": 0,
+              "title": "Номер кошелька с которого отправляете",
+              "key": "nomer_koshelka_s_kotorogo_otpravlyaete",
+              "__v": 0
+            },
+            {
+              "regexp": {
+                "value": "",
+                "flags": ""
+              },
+              "step": 1,
+              "placeholder": "Введите номер кошелька",
+              "length": null,
+              "minLength": null,
+              "maxLength": null,
+              "required": true,
+              "_id": "6288b5b1bbdcb1104f03e6aa",
+              "valuteId": "5c673268592883236a0bd0e9",
+              "type": 1,
+              "title": "Номер кошелька",
+              "key": "nomer_koshelka",
+              "__v": 0
+            }
+          ]
+        },
+        "getValute": {
+          "categories": [
+            "crypto"
+          ],
+          "isGet": true,
+          "isGive": true,
+          "minGive": 0.01,
+          "percentGive": 0.95,
+          "percentGet": 1.05,
+          "course": 2531775,
+          "minfee": 16,
+          "isCash": false,
+          "limitPercentBuy": 1,
+          "limitPercentSell": 1,
+          "step": 0,
+          "limitPlace": 0,
+          "useWhitebitWallet": false,
+          "withdrawable": true,
+          "depositable": true,
+          "confirmations": null,
+          "withFirekassa": false,
+          "invoiceQw": false,
+          "invoiceCard": false,
+          "invoiceYou": false,
+          "giveWarn": null,
+          "getWarn": null,
+          "_id": "5c6733e4592883236a0bd0ea",
+          "title": "Bitcoin",
+          "key": "BTC",
+          "bestchangeKey": "BTC",
+          "image": "/uploads/valutes/Bitcoin.svg_1550267364888.png",
+          "isLimit": false,
+          "network": "BTC",
+          "rawKey": "BTC",
+          "bestChangeCities": [],
+          "cash": false,
+          "maxGet": "7.93",
+          "forms": [
+            {
+              "regexp": {
+                "value": "(.*)",
+                "flags": "gi"
+              },
+              "step": 1,
+              "placeholder": "Введите номер кошелька",
+              "length": null,
+              "minLength": null,
+              "maxLength": null,
+              "required": true,
+              "_id": "5c7edd513eaa21226120175f",
+              "valuteId": "5c6733e4592883236a0bd0ea",
+              "type": 1,
+              "title": "Номер кошелька",
+              "key": "nomer_koshelka",
+              "__v": 0
+            }
+          ]
+        },
+        "giveAmount": 27000,
+        "getAmount": 0.00933
+      }
+    }
+  ]
+}
