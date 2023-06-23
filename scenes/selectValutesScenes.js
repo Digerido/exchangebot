@@ -1,28 +1,27 @@
 const { Markup, Scenes } = require('telegraf');
-const { valutes } = require('./api/index.js');
+const { Composer } = require('telegraf')
+const start = new Composer()
+const { valutes } = require('../services/index.js');
+
+start.command('start', async (ctx) => {
+  try {
+    ctx.session.valutes = await valutes()
+    await selectGiveValute(ctx)
+  } catch (error) {
+    console.error('Error:', error);
+  }
+});
 
 async function selectGiveValute(ctx) {
-    ctx.session.giveValuteList = valutes.result.filter(valute => valute.isGive === true)
-        .map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }]);
-    status = 'isGive';
-    const dropdownValuteList = Markup.inlineKeyboard(ctx.session.giveValuteList, { columns: 2 });
-    await ctx.reply(ctx.i18n.t('welcome'), dropdownValuteList);
+  console.log(ctx)
+  ctx.session.giveValuteList = ctx.session.valutes.filter(valute => valute.isGive === true)
+    .map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }]);
+  const dropdownValuteList = Markup.inlineKeyboard(ctx.session.giveValuteList, {columns:2});
+  await ctx.reply(ctx.i18n.t('welcome'), dropdownValuteList);
 }
 
-const start = new Scenes.WizardScene(
-    "start", // Our wizard scene id, which we will use to enter the scene
-    async (ctx) => {
-        try {
-            await selectGiveValute(ctx)
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    },
-    //async (ctx) => {
-    //    const { mainKeyboard } = getMainKeyboard(ctx);
-    //    await ctx.reply(ctx.i18n.t("shared.what_next"), mainKeyboard);
-    //    return ctx.scene.leave();
-    //}
+const selectValutesScenes = new Scenes.WizardScene(
+  "selectValutes", start // Our wizard scene id, which we will use to enter the scene
 );
 
-module.exports = start;
+module.exports = selectValutesScenes;

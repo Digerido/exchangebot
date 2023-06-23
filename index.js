@@ -1,34 +1,27 @@
-const { Extra, Markup, Telegraf } = require('telegraf');
+const { Extra, Markup, Scenes,Telegraf, session } = require('telegraf');
 const dotenv = require('dotenv');
-//const { createTransaction } = require('./api/index.js');
-const LocalSession = require('telegraf-session-local');
-const axios = require('axios');
-const { Stage } = require('telegraf/typings/scenes/stage.js');
+const selectValutesScenes = require('./scenes/selectValutesScenes');
+//const LocalSession = require('telegraf-session-local');
 const TelegrafI18n = require('telegraf-i18n')
 
 dotenv.config();
+
 const i18n = new TelegrafI18n({
   defaultLanguage: 'ru',
   allowMissing: false, // Default true
-  directory: path.resolve(__dirname, 'locales')
+  directory: './locales'
 })
 
-const getBaseUrl = process.env.GETBASEURL; // Replace with your base URL
-
-
-// replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.BOT_TOKEN;
-
-
-
-// Create a bot that uses 'polling' to fetch new updates
 const bot = new Telegraf(token);
-
-const stage = new Stage([require('/scenes/selectValutesScenes')])
-
-bot.use((new LocalSession({ database: 'session.json' })).middleware())
-bot.use(stage.middleware())
+bot.use(session());
 bot.use(i18n.middleware())
+const stage = new Scenes.Stage([selectValutesScenes])
+bot.use(stage.middleware())
+bot.hears("/start", ctx => ctx.scene.enter("selectValutes"));
+
+//bot.use((new LocalSession({ database: 'session.json' })).middleware())
+
 //bot.use(require('./composers/start.composers'))
 //bot.context.status
 let status;
