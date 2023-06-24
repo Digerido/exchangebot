@@ -4,7 +4,7 @@ dotenv.config();
 const getBaseUrl = process.env.GETBASEURL; // Replace with your base URL
 const createTransaction = async (dataToSend) => {
     return axios.post(`${getBaseUrl}/api/public/transactions/create-transaction`, dataToSend)
-    .then(response => { return response.data });
+    .then(response => { return response.data.result });
 };
 
 const valutes = async () => {

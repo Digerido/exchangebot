@@ -1,16 +1,12 @@
 const { crossRatesList } = require('../services/index');
-let giveAmount;
-let getAmount;
-let crossRates;
+
 async function getCrossRates() {
     const response = await crossRatesList();
-    const crs = response.filter((cr) => {
-        return cr.isDisabled === false;
-    });
-    return crs
+    return response.filter((cr) => cr.isDisabled === false);
 }
 
-const directExchangeRate = (ctx) => {
+const directExchangeRate = async (ctx) => {
+    const crossRates = await getCrossRates();
     if (!ctx.wizard.state.data.giveValute || !ctx.wizard.state.data.getValute) return null;
     const crossRate = crossRates.find((cr) => {
         return (
@@ -20,7 +16,6 @@ const directExchangeRate = (ctx) => {
     });
 
     if (crossRate) return 1 / crossRate.out;
-    console.log('crossRates', crossRate)
     return (
         ctx.wizard.state.data.getValute &&
         ctx.wizard.state.data.giveValute &&
@@ -33,22 +28,19 @@ const getFixFactor = (valute) => {
     return ["RUB", "USDT"].includes(valute?.key) ? 2 : 5;
 };
 
-const calculateGetAmount = (ctx) => {
-    console.log()
+const calculateGetAmount = async (ctx, giveAmount) => {
     return parseFloat(
-        (giveAmount / directExchangeRate(ctx)).toFixed(
+        (giveAmount / await directExchangeRate(ctx)).toFixed(
             getFixFactor(ctx.wizard.state.data.getValute)
         )
     );
 };
 
 async function setGiveAmount(ctx, value) {
-    crossRates = await getCrossRates(ctx)
     const fixedValue = (+value).toFixed(getFixFactor(ctx.wizard.state.data.giveValute));
-    giveAmount = parseFloat(fixedValue);
-    getAmount = calculateGetAmount(ctx);
-    console.log(giveAmount)
-    return { giveAmount: giveAmount, getAmount: getAmount }
+    const giveAmount = parseFloat(fixedValue);
+    const getAmount = await calculateGetAmount(ctx, giveAmount);
+    return { giveAmount, getAmount }
 }
 
 module.exports = { setGiveAmount };
