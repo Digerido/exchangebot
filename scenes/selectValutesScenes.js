@@ -108,23 +108,11 @@ userSendEmail.email((/.*@.*\..*/, async (ctx) => {
 }));
 
 
-const userSendPhone = new Composer()
-
-userSendPhone.on('contact', async (ctx) => {
-  try {
-    ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
-    console.log(ctx.wizard.state.data.phone)
-    return ctx.wizard.next()
-  } catch (error) {
-    console.log(error)
-  }
-});
-
 
 const userCreateTransaction = new Composer()
 
-userSendPhone.on('text',async (ctx) => {
-  console.log('create trans')
+userCreateTransaction.on('contact',async (ctx) => {
+  ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
   const dataToSend = {
     status: 0,
     referal: null,
@@ -157,8 +145,8 @@ userSendPhone.on('text',async (ctx) => {
     ctx.wizard.state.data.status = response.status;
     const giveAddress = response.giveValute.wallet.forms[0].description;
     const getAddress = response.getValute.wallet.forms[0].description;
+    ctx.wizard.state.data.id = response._id
     const confirmOrder = Markup.inlineKeyboard(
-      ctx.wizard.state.data.id = response._id
       [[{ text: 'Я оплатил', callback_data: 'confirm' }],
       [{ text: 'Отменить', callback_data: 'cancel' }]]);
     ctx.reply(`Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке ${giveAddress} ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title}, к получению ${getAddress} Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки буде зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам`, confirmOrder);
@@ -199,7 +187,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const selectValutesScenes = new Scenes.WizardScene(
-  "selectValutes", selectGiveValute, selectGetValute, userSendAmount, userSendAddress, userSendEmail, userSendPhone, userCreateTransaction, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "selectValutes", selectGiveValute, selectGetValute, userSendAmount, userSendAddress, userSendEmail, userCreateTransaction, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = selectValutesScenes;
