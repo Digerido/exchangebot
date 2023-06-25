@@ -70,11 +70,12 @@ userSendAmount.on("callback_query", async (ctx) => {
 userSendAmount.on("text", async (ctx) => {
   const userAmount = parseFloat(ctx.message.text.replace(',', '.'))
   const choosenValute = ctx.wizard.state.data.choosenValute
+
   if (choosenValute.minGive > userAmount) {
     await ctx.reply('Введенное значение меньше допустимого');
   } else {
     try {
-      const { giveAmount, getAmount } = choosenValute.key === ctx.wizard.state.data.giveValute.bestchangeKey ? await setGiveAmount(ctx, userAmount) : await setGetAmount(ctx, userAmount)
+      const { giveAmount, getAmount } = choosenValute.bestchangeKey === ctx.wizard.state.data.giveValute.bestchangeKey ? await setGiveAmount(ctx, userAmount) : await setGetAmount(ctx, userAmount)
       ctx.wizard.state.data.giveAmount = giveAmount;
       ctx.wizard.state.data.getAmount = getAmount;
     } catch (error) {

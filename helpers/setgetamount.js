@@ -11,7 +11,6 @@ const getFixFactor = (valute) => {
 async function setGetAmount(ctx, value) {
     const fixedValue = (+value).toFixed(getFixFactor(ctx.wizard.state.data.getValute));
     const getAmount = parseFloat(fixedValue);
-    console.log('getAmount',getAmount)
     const giveAmount = await calculateGiveAmount(ctx, getAmount);
     return { giveAmount, getAmount }
 }
