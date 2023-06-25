@@ -21,5 +21,31 @@ const crossRatesList = async () => {
     });
 };
 
+async function getOrder(id) {
+    try {
+      if (!id) throw new Error("Не задан ID заявки");
+      isBusy.value = true;
+      const { status: reqStatus, result } = await axios.get(
+        `/api/public/transactions/get-transaction/${id}`
+      );
+      date = result.date;
+      get= result.get;
+      give = result.give;
+      resultMessage = result.resultMessage;
+      status = result.status;
+      id = result._id;
+      url = result.url || null;
+      paymentId = result.paymentId || null;
+      vanilaDepositStatus = result.vanilaDepositStatus || null;
+      wbWithdrawStatus = result.wbWithdrawStatus || null;
+      return result;
+    } catch (error) {
+      console.log(error.response);
+      throw new Error(error);
+    } finally {
+      isBusy = false;
+    }
+  }
 
-module.exports = { createTransaction, valutes, crossRatesList };
+
+module.exports = { createTransaction, valutes, crossRatesList, getOrder };

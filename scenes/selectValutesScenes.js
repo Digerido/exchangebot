@@ -1,8 +1,8 @@
 const { Markup, Scenes, Composer } = require('telegraf');
 const { giveValutesKeyboard, getValutesKeyboard } = require('../utils/keyboard/valutes-keyboard')
-const  phoneKeyboard = require('../utils/keyboard/phone-keyboard')
+const phoneKeyboard = require('../utils/keyboard/phone-keyboard')
 
-const { valutes, createTransaction } = require('../services/index');
+const { valutes, createTransaction, getOrder } = require('../services/index');
 const { setGiveAmount } = require('../helpers/index');
 class WizardData {
   constructor() {
@@ -55,30 +55,6 @@ selectGetValute.on("callback_query", async (ctx) => {
   return ctx.wizard.next()
 });
 
-
-
-const userSendEmail = new Composer();
-
-userSendEmail.hears(/.*@.*\..*/, async (ctx) => {
-  ctx.wizard.state.data.email = ctx.message.text;
-  // здесь вы можете добавить свой следующий шаг
-  return ctx.wizard.next();
-});
-
-userSendEmail.use((ctx) => ctx.replyWithMarkdown('Пожалуйста, введите ваш электронный адрес.'));
-
-const userSendPhone = new Composer();
-
-userSendPhone.on("contact", (ctx) => {
-  const phoneNumber = ctx.message.contact.phone_number;
-  ctx.wizard.state.data.phoneNumber = phoneNumber;
-  return ctx.wizard.next();
-});
-
-userSendPhone.on("message", (ctx) => {
-  ctx.reply("Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже.", phoneKeyboard);
-});
-
 const userSendAmount = new Composer()
 
 userSendAmount.on("text", async (ctx) => {
@@ -98,33 +74,69 @@ userSendAmount.on("text", async (ctx) => {
       [[{ text: 'Да', callback_data: 'yes' }],
       [{ text: 'Назад', callback_data: 'back' }]]);
     await ctx.reply('Подготовка к оплате', prepareToPayList);
+    return ctx.wizard.next();
   }
-
 })
 
-userSendAmount.on("callback_query", async (ctx) => {
+const userSendAddress = new Composer()
+
+userSendAddress.on("callback_query", async (ctx) => {
   if (ctx.callbackQuery.data === 'back') {
     return ctx.wizard.back();
   }
   ctx.reply(`Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.`);
-  return ctx.wizard.next()
 })
+
+userSendAddress.on("text", async (ctx) => {
+  if (ctx.message.data === 'back') {
+    return ctx.wizard.back();
+  }
+  else{
+    ctx.wizard.state.data.address = ctx.message.text;
+    await ctx.reply('Пожалуйста, введите email');
+    return ctx.wizard.next()
+  }
+})
+
+const userSendEmail = new Composer()
+userSendEmail.email((/.*@.*\..*/, async (ctx) => {
+    ctx.wizard.state.data.email = ctx.message.text;
+    ctx.reply("Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже.", Markup.keyboard([
+      [{ text: 'Отправить номер телефона', request_contact: true }]
+    ]).resize().oneTime());  
+    return ctx.wizard.next()
+}));
+
+
+const userSendPhone = new Composer()
+
+userSendPhone.on('contact', async (ctx) => {
+  try {
+    ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
+    console.log(ctx.wizard.state.data.phone)
+    return ctx.wizard.next()
+  } catch (error) {
+    console.log(error)
+  }
+});
+
 
 const userCreateTransaction = new Composer()
 
-userCreateTransaction.on("text", async (ctx) => {
+userSendPhone.on('text',async (ctx) => {
+  console.log('create trans')
   const dataToSend = {
-    status: 0, // TODO: проверьте этот статус
-    referal: null, // этот параметр будет установлен, если есть значение referer в локальном хранилище позже
-    isCrypto: false, // TODO: это тоже
-    ip: "192.168.1.1", // этот параметр будет установлен в новом заказе позже
+    status: 0,
+    referal: null,
+    isCrypto: false,
+    ip: "192.168.1.1",
     ua: null,
     give: ctx.wizard.state.data.giveValute
       ? {
         valute_id: ctx.wizard.state.data.giveValute._id,
         forms: {
           count: ctx.wizard.state.data.giveAmount,
-          nomer_koshelka_s_kotorogo_otpravlyaete: ctx.message.text
+          nomer_koshelka_s_kotorogo_otpravlyaete: ctx.wizard.state.data.address
         },
       }
       : null,
@@ -135,17 +147,18 @@ userCreateTransaction.on("text", async (ctx) => {
         forms: {
           result: ctx.wizard.state.data.getAmount,
           email: ctx.wizard.state.data.email,
-          nomer_koshelka: ctx.message.contact.phone_number
+          nomer_koshelka: ctx.wizard.state.data.phone
         },
       }
       : null,
-  };
+  };  
   try {
     const response = await createTransaction(dataToSend);
     ctx.wizard.state.data.status = response.status;
     const giveAddress = response.giveValute.wallet.forms[0].description;
     const getAddress = response.getValute.wallet.forms[0].description;
     const confirmOrder = Markup.inlineKeyboard(
+      ctx.wizard.state.data.id = response._id
       [[{ text: 'Я оплатил', callback_data: 'confirm' }],
       [{ text: 'Отменить', callback_data: 'cancel' }]]);
     ctx.reply(`Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке ${giveAddress} ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title}, к получению ${getAddress} Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки буде зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам`, confirmOrder);
@@ -154,11 +167,13 @@ userCreateTransaction.on("text", async (ctx) => {
   }
 })
 
-userCreateTransaction.on('callback_query', async (ctx) => {
+const checkOrder = new Composer()
+
+checkOrder.on('callback_query', async (ctx) => {
+
   switch (ctx.callbackQuery.data) {
     case 'confirm':
-      ctx.wizard.state.data.status = 4;
-      ctx.reply('Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята')
+      ctx.wizard.state.data.status = 1;
       break;
     case 'cancel':
       ctx.wizard.state.data.status = 2;
@@ -166,9 +181,14 @@ userCreateTransaction.on('callback_query', async (ctx) => {
       break;
     default:
       break;
+
   }
   try {
     await ctx.editMessageReplyMarkup();
+    ctx.reply('Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята')
+    const id = ctx.wizard.state.data.id;
+    const response = await getOrder(id);
+    console.log('check order = ', response)
   } catch (error) {
     console.error('Error while editing message reply markup:', error);
   }
@@ -176,8 +196,10 @@ userCreateTransaction.on('callback_query', async (ctx) => {
 
 
 
+
+
 const selectValutesScenes = new Scenes.WizardScene(
-  "selectValutes", selectGiveValute, selectGetValute, userSendAmount, userSendEmail, userSendPhone, userCreateTransaction  // Our wizard scene id, which we will use to enter the scene
+  "selectValutes", selectGiveValute, selectGetValute, userSendAmount, userSendAddress, userSendEmail, userSendPhone, userCreateTransaction, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = selectValutesScenes;
