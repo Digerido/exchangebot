@@ -3,7 +3,9 @@ const { giveValutesKeyboard, getValutesKeyboard } = require('../utils/keyboard/v
 const phoneKeyboard = require('../utils/keyboard/phone-keyboard')
 
 const { valutes, createTransaction, getOrder } = require('../services/index');
-const { setGiveAmount } = require('../helpers/index');
+const { setGiveAmount } = require('../helpers/setgiveamount');
+const { setGetAmount } = require('../helpers/setgetamount');
+
 class WizardData {
   constructor() {
     this.giveValute = null;
@@ -51,19 +53,28 @@ selectGetValute.on("callback_query", async (ctx) => {
   }
   const chosenValute = ctx.callbackQuery.data;
   ctx.wizard.state.data.getValute = await findValute(ctx, chosenValute);
-  await ctx.reply(`Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title + ' -> ' + ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive + ' ' + ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive + ' ' + ctx.wizard.state.data.getValute.key}. Напишите сумму к обмену:`);
+  const selectValutes = Markup.inlineKeyboard(
+    [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
+    [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]]);
+  await ctx.reply(`Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title + ' -> ' + ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive + ' ' + ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive + ' ' + ctx.wizard.state.data.getValute.key}. Выберите валюту для пополнения`, selectValutes);
   return ctx.wizard.next()
 });
 
 const userSendAmount = new Composer()
 
+userSendAmount.on("callback_query", async (ctx) => {
+  ctx.wizard.state.data.choosenValute = await findValute(ctx, ctx.callbackQuery.data)
+  ctx.reply(`Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}`)
+})
+
 userSendAmount.on("text", async (ctx) => {
   const userAmount = parseFloat(ctx.message.text.replace(',', '.'))
-  if (ctx.wizard.state.data.giveValute?.minGive > userAmount) {
+  const choosenValute = ctx.wizard.state.data.choosenValute
+  if (choosenValute.minGive > userAmount) {
     await ctx.reply('Введенное значение меньше допустимого');
   } else {
     try {
-      const { giveAmount, getAmount } = await setGiveAmount(ctx, userAmount);
+      const { giveAmount, getAmount } = choosenValute.key === ctx.wizard.state.data.giveValute.bestchangeKey ? await setGiveAmount(ctx, userAmount) : await setGetAmount(ctx, userAmount)
       ctx.wizard.state.data.giveAmount = giveAmount;
       ctx.wizard.state.data.getAmount = getAmount;
     } catch (error) {
@@ -75,8 +86,10 @@ userSendAmount.on("text", async (ctx) => {
       [{ text: 'Назад', callback_data: 'back' }]]);
     await ctx.reply('Подготовка к оплате', prepareToPayList);
     return ctx.wizard.next();
+
   }
 })
+
 
 const userSendAddress = new Composer()
 
@@ -91,7 +104,7 @@ userSendAddress.on("text", async (ctx) => {
   if (ctx.message.data === 'back') {
     return ctx.wizard.back();
   }
-  else{
+  else {
     ctx.wizard.state.data.address = ctx.message.text;
     await ctx.reply('Пожалуйста, введите email');
     return ctx.wizard.next()
@@ -100,18 +113,16 @@ userSendAddress.on("text", async (ctx) => {
 
 const userSendEmail = new Composer()
 userSendEmail.email((/.*@.*\..*/, async (ctx) => {
-    ctx.wizard.state.data.email = ctx.message.text;
-    ctx.reply("Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже.", Markup.keyboard([
-      [{ text: 'Отправить номер телефона', request_contact: true }]
-    ]).resize().oneTime());  
-    return ctx.wizard.next()
+  ctx.wizard.state.data.email = ctx.message.text;
+  ctx.reply("Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже.", Markup.keyboard([
+    [{ text: 'Отправить номер телефона', request_contact: true }]
+  ]).resize().oneTime());
+  return ctx.wizard.next()
 }));
-
-
 
 const userCreateTransaction = new Composer()
 
-userCreateTransaction.on('contact',async (ctx) => {
+userCreateTransaction.on('contact', async (ctx) => {
   ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
   const dataToSend = {
     status: 0,
@@ -139,7 +150,7 @@ userCreateTransaction.on('contact',async (ctx) => {
         },
       }
       : null,
-  };  
+  };
   try {
     const response = await createTransaction(dataToSend);
     ctx.wizard.state.data.status = response.status;
@@ -187,7 +198,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const selectValutesScenes = new Scenes.WizardScene(
-  "selectValutes", selectGiveValute, selectGetValute, userSendAmount, userSendAddress, userSendEmail, userCreateTransaction, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "exchange", selectGiveValute, selectGetValute, userSendAmount, userSendAddress, userSendEmail, userCreateTransaction, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = selectValutesScenes;
