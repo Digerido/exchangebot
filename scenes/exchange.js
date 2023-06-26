@@ -1,7 +1,7 @@
 const { Markup, Scenes, Composer } = require('telegraf');
-const { giveValutesKeyboard, getValutesKeyboard } = require('../utils/keyboard/valutes-keyboard')
+const { giveValutesKeyboard, getValutesKeyboard, selectedValutesKeyboard } = require('../utils/keyboard/valutes-keyboard')
 const phoneKeyboard = require('../utils/keyboard/phone-keyboard')
-
+const editButton = require('../utils/buttons/edit-button')
 const { valutes, createTransaction, getOrder } = require('../services/index');
 const { setGiveAmount } = require('../helpers/setgiveamount');
 const { setGetAmount } = require('../helpers/setgetamount');
@@ -20,6 +20,12 @@ async function findValute(ctx, valuteKey) {
   return valutesList.find(valute => valute.bestchangeKey === valuteKey);
 }
 const selectGiveValute = new Composer()
+const selectGetValute = new Composer()
+const setAmount = new Composer()
+const setAddress = new Composer()
+const setEmail = new Composer()
+const createOrder = new Composer()
+const checkOrder = new Composer()
 
 selectGiveValute.command('start', async (ctx) => {
   try {
@@ -31,46 +37,34 @@ selectGiveValute.command('start', async (ctx) => {
   }
 });
 
-
 selectGiveValute.on("callback_query", async (ctx) => {
-  if (ctx.callbackQuery.data === 'back') {
-    return ctx.wizard.back();
-  }
+  ctx.wizard.steps[ctx.wizard.cursor].handler(ctx)
   const chosenValute = ctx.callbackQuery.data;
   ctx.wizard.state.data.giveValute = await findValute(ctx, chosenValute);
-  await ctx.reply(`Вы выбрали вариант: ${ctx.wizard.state.data.giveValute.title}`);
   const getValutes = await getValutesKeyboard()
   await ctx.reply(ctx.i18n.t('selectgetvalute'), getValutes)
   return ctx.wizard.next()
 });
 
 
-const selectGetValute = new Composer()
-
 selectGetValute.on("callback_query", async (ctx) => {
-  if (ctx.callbackQuery.data === 'back') {
-    return ctx.wizard.back();
-  }
   const chosenValute = ctx.callbackQuery.data;
   ctx.wizard.state.data.getValute = await findValute(ctx, chosenValute);
-  const selectValutes = Markup.inlineKeyboard(
-    [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
-    [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]]);
+  const selectValutes = selectedValutesKeyboard(ctx)
   await ctx.reply(`Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title + ' -> ' + ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive + ' ' + ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive + ' ' + ctx.wizard.state.data.getValute.key}. Выберите валюту для пополнения`, selectValutes);
   return ctx.wizard.next()
 });
 
-const userSendAmount = new Composer()
 
-userSendAmount.on("callback_query", async (ctx) => {
+
+setAmount.on("callback_query", async (ctx) => {
   ctx.wizard.state.data.choosenValute = await findValute(ctx, ctx.callbackQuery.data)
   ctx.reply(`Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}`)
 })
 
-userSendAmount.on("text", async (ctx) => {
+setAmount.on("text", async (ctx) => {
   const userAmount = parseFloat(ctx.message.text.replace(',', '.'))
   const choosenValute = ctx.wizard.state.data.choosenValute
-
   if (choosenValute.minGive > userAmount) {
     await ctx.reply('Введенное значение меньше допустимого');
   } else {
@@ -92,16 +86,15 @@ userSendAmount.on("text", async (ctx) => {
 })
 
 
-const userSendAddress = new Composer()
 
-userSendAddress.on("callback_query", async (ctx) => {
+setAddress.on("callback_query", async (ctx) => {
   if (ctx.callbackQuery.data === 'back') {
     return ctx.wizard.back();
   }
   ctx.reply(`Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.`);
 })
 
-userSendAddress.on("text", async (ctx) => {
+setAddress.on("text", async (ctx) => {
   if (ctx.message.data === 'back') {
     return ctx.wizard.back();
   }
@@ -112,8 +105,8 @@ userSendAddress.on("text", async (ctx) => {
   }
 })
 
-const userSendEmail = new Composer()
-userSendEmail.email((/.*@.*\..*/, async (ctx) => {
+
+setEmail.email((/.*@.*\..*/, async (ctx) => {
   ctx.wizard.state.data.email = ctx.message.text;
   ctx.reply("Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже.", Markup.keyboard([
     [{ text: 'Отправить номер телефона', request_contact: true }]
@@ -121,9 +114,13 @@ userSendEmail.email((/.*@.*\..*/, async (ctx) => {
   return ctx.wizard.next()
 }));
 
-const userCreateTransaction = new Composer()
+setEmail.on('text', async (ctx) => {
+  await ctx.reply("Некорректный email")
+})
 
-userCreateTransaction.on('contact', async (ctx) => {
+
+
+createOrder.on('contact', async (ctx) => {
   ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
   const dataToSend = {
     status: 0,
@@ -154,7 +151,7 @@ userCreateTransaction.on('contact', async (ctx) => {
   };
   try {
     const response = await createTransaction(dataToSend);
-    ctx.wizard.state.data.status = response.status;
+    ctx.wizard.state.data.orderStatus = response.status;
     const giveAddress = response.giveValute.wallet.forms[0].description;
     const getAddress = response.getValute.wallet.forms[0].description;
     ctx.wizard.state.data.id = response._id
@@ -167,16 +164,16 @@ userCreateTransaction.on('contact', async (ctx) => {
   }
 })
 
-const checkOrder = new Composer()
+
 
 checkOrder.on('callback_query', async (ctx) => {
 
   switch (ctx.callbackQuery.data) {
     case 'confirm':
-      ctx.wizard.state.data.status = 1;
+      ctx.wizard.state.data.orderStatus = 1;
       break;
     case 'cancel':
-      ctx.wizard.state.data.status = 2;
+      ctx.wizard.state.data.orderStatus = 2;
       ctx.reply('Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята')
       break;
     default:
@@ -198,8 +195,8 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 
-const selectValutesScenes = new Scenes.WizardScene(
-  "exchange", selectGiveValute, selectGetValute, userSendAmount, userSendAddress, userSendEmail, userCreateTransaction, checkOrder  // Our wizard scene id, which we will use to enter the scene
+const exchange = new Scenes.WizardScene(
+  "exchange", selectGiveValute, selectGetValute, setAmount, setAddress, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
-module.exports = selectValutesScenes;
+module.exports = exchange;

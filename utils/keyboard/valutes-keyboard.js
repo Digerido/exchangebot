@@ -1,22 +1,30 @@
 const { valutes } = require('../../services/index');
 const { Markup } = require('telegraf');
 
+const createKeyboard = async (filterFunc) => {
+  const valutesList = await valutes();
+  const filteredValutes = valutesList.filter(filterFunc)
+      .map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }]);
+  
+  return Markup.inlineKeyboard(filteredValutes, { columns: 2 }).oneTime().resize();  
+};
+
 const giveValutesKeyboard = async () => {
-    const valutesList = await valutes();
-    const giveValutes = valutesList.filter(valute => valute.bestchangeKey === 'QWRUB')
-        .map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }]);
-    const giveValutesKeyboard = Markup.inlineKeyboard(giveValutes, { columns: 2 }).oneTime().resize();
-    return giveValutesKeyboard;
+  return createKeyboard(valute => valute.bestchangeKey === 'QWRUB');
 };
 
 const getValutesKeyboard = async () => {
-    const valutesList = await valutes();
-    const getValutes = valutesList.filter(valute => valute.isGet === true)
-        .map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }])
-        getValutes.push([{ text: 'Назад', callback_data: 'back' }])
-    const getValutesKeyboard = Markup.inlineKeyboard(getValutes);
-
-    return getValutesKeyboard;
+  return createKeyboard(valute => valute.isGet === true);
 };
 
-module.exports = { giveValutesKeyboard, getValutesKeyboard };
+const selectedValutesKeyboard = (ctx) => {
+    console.log(ctx)
+    return Markup.inlineKeyboard(
+        [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
+        [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]]);
+  };
+  
+
+
+
+module.exports = { giveValutesKeyboard, getValutesKeyboard, selectedValutesKeyboard };
