@@ -2,50 +2,47 @@ const dotenv = require('dotenv');
 const axios = require('axios');
 dotenv.config();
 const getBaseUrl = process.env.GETBASEURL; // Replace with your base URL
-const createTransaction = async (dataToSend) => {
-    return axios.post(`${getBaseUrl}/api/public/transactions/create-transaction`, dataToSend)
-    .then(response => { return response.data.result });
-};
 
-const valutes = async () => {
-    return axios.get(`${getBaseUrl}/api/public/valutes`)
-    .then(response => {
-        return response.data.result;
-    });
-};
-
-const crossRatesList = async () => {
-    return axios.get(`${getBaseUrl}/api/public/cross-rates`)
-    .then(response => {
-        return response.data.result
-    });
-};
-
-async function getOrder(id) {
+const makeRequest = async (method, url, data = null) => {
+    const config = {
+        method,
+        url: `${getBaseUrl}${url}`,
+        ...(data && { data }),
+    };
     try {
-      if (!id) throw new Error("Не задан ID заявки");
-      isBusy.value = true;
-      const { status: reqStatus, result } = await axios.get(
-        `/api/public/transactions/get-transaction/${id}`
-      );
-      date = result.date;
-      get= result.get;
-      give = result.give;
-      resultMessage = result.resultMessage;
-      status = result.status;
-      id = result._id;
-      url = result.url || null;
-      paymentId = result.paymentId || null;
-      vanilaDepositStatus = result.vanilaDepositStatus || null;
-      wbWithdrawStatus = result.wbWithdrawStatus || null;
-      return result;
+        const response = await axios(config);
+        if (response.data.status) {
+            return response.data.result;
+        }
+        else {
+            throw new Error("Response status was not successful: " + response.data);
+        }
     } catch (error) {
-      console.log(error.response);
-      throw new Error(error);
-    } finally {
-      isBusy = false;
+        console.error("Error making request: ", error);
+        throw error;
     }
-  }
+}
 
+const createTransaction = (dataToSend) => {
+    return makeRequest('post', '/api/public/transactions/create-transaction', dataToSend);
+};
 
-module.exports = { createTransaction, valutes, crossRatesList, getOrder };
+const valutes = () => {
+    return makeRequest('get', '/api/public/valutes');
+};
+
+const crossRatesList = () => {
+    return makeRequest('get', '/api/public/cross-rates');
+};
+
+const updateOrder = (data) => {
+    if (!data.id) throw new Error("Не задан ID заявки");
+    return makeRequest('post', `/api/public/transactions/${data.id}`, { step: data.status });
+}
+
+const getOrder = (data) => {
+    if (!data.id) throw new Error("Не задан ID заявки");
+    return makeRequest('get', `/api/public/transactions/get-transaction/${data.id}`, { step: data.status });
+}
+
+module.exports = { createTransaction, valutes, crossRatesList, getOrder, updateOrder };
