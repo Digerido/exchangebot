@@ -38,10 +38,10 @@ selectGiveValute.command('start', async (ctx) => {
 });
 
 selectGiveValute.on("callback_query", async (ctx) => {
-  ctx.wizard.steps[ctx.wizard.cursor].handler(ctx)
   const chosenValute = ctx.callbackQuery.data;
   ctx.wizard.state.data.giveValute = await findValute(ctx, chosenValute);
   const getValutes = await getValutesKeyboard()
+  await ctx.answerCbQuery();
   await ctx.reply(ctx.i18n.t('selectgetvalute'), getValutes)
   return ctx.wizard.next()
 });
@@ -52,12 +52,13 @@ selectGetValute.on("callback_query", async (ctx) => {
   ctx.wizard.state.data.getValute = await findValute(ctx, chosenValute);
   const selectValutes = selectedValutesKeyboard(ctx)
   await ctx.reply(`Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title + ' -> ' + ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive + ' ' + ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive + ' ' + ctx.wizard.state.data.getValute.key}. Выберите валюту для пополнения`, selectValutes);
-  return ctx.wizard.next()
+  await ctx.answerCbQuery();
 });
 
 
 
 setAmount.on("callback_query", async (ctx) => {
+  console.log(ctx.wizard.state.data?.choosenValute)
   ctx.wizard.state.data.choosenValute = await findValute(ctx, ctx.callbackQuery.data)
   ctx.reply(`Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}`)
 })
