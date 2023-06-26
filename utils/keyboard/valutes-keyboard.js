@@ -18,10 +18,10 @@ const getValutesKeyboard = async () => {
 };
 
 const selectedValutesKeyboard = (ctx) => {
-    console.log(ctx)
+    console.log('klava = ',ctx.wizard.state.data.getValute.title)
     return Markup.inlineKeyboard(
-        [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
-        [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]]);
+        [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: 'give' }],
+        [{ text: ctx.wizard.state.data.getValute.title, callback_data: 'get'}]]);
   };
   
 

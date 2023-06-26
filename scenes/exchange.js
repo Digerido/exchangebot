@@ -21,12 +21,15 @@ async function findValute(ctx, valuteKey) {
 }
 const selectGiveValute = new Composer()
 const selectGetValute = new Composer()
+const setValute = new Composer()
 const setAmount = new Composer()
 const setAddress = new Composer()
 const setEmail = new Composer()
 const createOrder = new Composer()
 const checkOrder = new Composer()
 
+
+//пишу страт
 selectGiveValute.command('start', async (ctx) => {
   try {
     const giveValutes = await giveValutesKeyboard()
@@ -37,31 +40,44 @@ selectGiveValute.command('start', async (ctx) => {
   }
 });
 
+// выбрал валюту для отправления и вывел список валют для получения
 selectGiveValute.on("callback_query", async (ctx) => {
   const chosenValute = ctx.callbackQuery.data;
   ctx.wizard.state.data.giveValute = await findValute(ctx, chosenValute);
   const getValutes = await getValutesKeyboard()
-  await ctx.answerCbQuery();
   await ctx.reply(ctx.i18n.t('selectgetvalute'), getValutes)
+  await ctx.answerCbQuery();
   return ctx.wizard.next()
 });
 
-
+// выбрал валюту для получения и вывел две валюты для выбора оплаты
 selectGetValute.on("callback_query", async (ctx) => {
   const chosenValute = ctx.callbackQuery.data;
   ctx.wizard.state.data.getValute = await findValute(ctx, chosenValute);
   const selectValutes = selectedValutesKeyboard(ctx)
   await ctx.reply(`Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title + ' -> ' + ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive + ' ' + ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive + ' ' + ctx.wizard.state.data.getValute.key}. Выберите валюту для пополнения`, selectValutes);
   await ctx.answerCbQuery();
+  return ctx.wizard.next();
 });
 
-
-
-setAmount.on("callback_query", async (ctx) => {
-  console.log(ctx.wizard.state.data?.choosenValute)
-  ctx.wizard.state.data.choosenValute = await findValute(ctx, ctx.callbackQuery.data)
-  ctx.reply(`Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}`)
-})
+///может быть эту часть кода можно сделать красивее lol
+setValute.on('callback_query', async (ctx) => {
+  console.log('Callback query received:', ctx.callbackQuery.data);
+  if (ctx.callbackQuery.data === 'get') {
+    console.log('get')
+    ctx.wizard.state.data.choosenValute = ctx.wizard.state.data.getValute;
+  } else if (ctx.callbackQuery.data === 'give') {
+    ctx.wizard.state.data.choosenValute = ctx.wizard.state.data.giveValute;
+  } else {
+    await ctx.answerCbQuery();
+    console.log('else = ', ctx.callbackQuery.data);
+    return ctx.wizard.steps[ctx.wizard.cursor = 1].handler(ctx);
+  }
+  await ctx.answerCbQuery();
+  await ctx.reply(`Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}`);
+  return ctx.wizard.next();
+});
+///
 
 setAmount.on("text", async (ctx) => {
   const userAmount = parseFloat(ctx.message.text.replace(',', '.'))
@@ -86,24 +102,14 @@ setAmount.on("text", async (ctx) => {
   }
 })
 
-
-
 setAddress.on("callback_query", async (ctx) => {
-  if (ctx.callbackQuery.data === 'back') {
-    return ctx.wizard.back();
-  }
   ctx.reply(`Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.`);
 })
 
 setAddress.on("text", async (ctx) => {
-  if (ctx.message.data === 'back') {
-    return ctx.wizard.back();
-  }
-  else {
     ctx.wizard.state.data.address = ctx.message.text;
     await ctx.reply('Пожалуйста, введите email');
     return ctx.wizard.next()
-  }
 })
 
 
@@ -197,7 +203,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const exchange = new Scenes.WizardScene(
-  "exchange", selectGiveValute, selectGetValute, setAmount, setAddress, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "exchange", selectGiveValute, selectGetValute, setValute, setAmount, setAddress, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = exchange;
