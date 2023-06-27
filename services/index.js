@@ -18,8 +18,8 @@ const makeRequest = async (method, url, data = null) => {
             throw new Error("Response status was not successful: " + response.data);
         }
     } catch (error) {
-        console.error("Error making request: ", error);
-        throw error;
+        console.error("Error making request: ", error.data);
+        throw error.data;
     }
 }
 
@@ -40,9 +40,9 @@ const updateOrder = (data) => {
     return makeRequest('post', `/api/public/transactions/${data.id}`, { step: data.status });
 }
 
-const getOrder = (data) => {
-    if (!data.id) throw new Error("Не задан ID заявки");
-    return makeRequest('get', `/api/public/transactions/get-transaction/${data.id}`, { step: data.status });
+const getOrder = (id) => {
+    if (!id) throw new Error("Не задан ID заявки");
+    return makeRequest('get', `/api/public/transactions/get-transaction/${id}`);
 }
 
 module.exports = { createTransaction, valutes, crossRatesList, getOrder, updateOrder };

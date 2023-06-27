@@ -3,9 +3,10 @@ const { message } = require('telegraf/filters');
 const { giveValutesKeyboard, getValutesKeyboard, selectedValutesKeyboard } = require('../utils/keyboard/valutes-keyboard')
 const phoneKeyboard = require('../utils/keyboard/phone-keyboard')
 const editButton = require('../utils/buttons/edit-button')
-const { valutes, createTransaction, updateOrder } = require('../services/index');
+const { valutes, createTransaction, updateOrder, getOrder } = require('../services/index');
 const { setGiveAmount } = require('../helpers/setgiveamount');
 const { setGetAmount } = require('../helpers/setgetamount');
+const cron = require('node-cron');
 
 class WizardData {
   constructor() {
@@ -32,7 +33,6 @@ const checkOrder = new Composer()
 
 //пишу страт
 selectGiveValute.command('start', async (ctx) => {
-  console.log(ctx.session)
   try {
     const giveValutes = await giveValutesKeyboard()
     ctx.wizard.state.data = new WizardData();
@@ -64,8 +64,6 @@ selectGetValute.on("callback_query", async (ctx) => {
 
 ///может быть эту часть кода можно сделать красивее lol
 setValute.on('callback_query', async (ctx) => {
-  console.log('back button = ', ctx.wizard.state.data)
-  console.log('back button = ', ctx.wizard.state.data)
   try {
     if (ctx.callbackQuery.data === 'get') {
       ctx.wizard.state.data.choosenValute = ctx.wizard.state.data.getValute;
@@ -73,7 +71,6 @@ setValute.on('callback_query', async (ctx) => {
       ctx.wizard.state.data.choosenValute = ctx.wizard.state.data.giveValute;
     } else {
       await ctx.answerCbQuery();
-      console.log('else = ', ctx.callbackQuery.data);
       return ctx.wizard.steps[ctx.wizard.cursor = 1].handler(ctx);
     }
     await ctx.answerCbQuery();
@@ -86,9 +83,13 @@ setValute.on('callback_query', async (ctx) => {
 ///
 
 setValute.on("text", async (ctx) => {
+
   const regEx = /^[0-9]*[.,]?[0-9]+$/;
   const userAmount = parseFloat(ctx.message.text.replace(',', '.'))
   const choosenValute = ctx.wizard.state.data.choosenValute
+  if (!choosenValute) {
+    return
+  }
   if (regEx.test(ctx.message.text)) {
     if (choosenValute.minGive > userAmount) {
       await ctx.reply('Введенное значение меньше допустимого');
@@ -114,13 +115,11 @@ setValute.on("text", async (ctx) => {
 })
 
 setAddress.on("callback_query", async (ctx) => {
-  console.log('WIIIIZARD = ',ctx.wizard)
-  console.log('MESSAGEUD = ',ctx.update.callback_query.message)
   //if (ctx.callbackQuery.data === 'back') {
   //  return ctx.wizard.steps[ctx.wizard.cursor = 2].handler(ctx);
   //}
-  //await ctx.answerCbQuery();
-  //ctx.reply(`Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.`);
+  await ctx.answerCbQuery();
+  ctx.reply(`Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.`);
 })
 
 setAddress.on("text", async (ctx) => {
@@ -183,40 +182,47 @@ createOrder.on('contact', async (ctx) => {
       [[{ text: 'Я оплатил', callback_data: 'confirm' }],
       [{ text: 'Отменить', callback_data: 'cancel' }]]);
     ctx.reply(`Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке ${giveAddress} ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title}, к получению ${getAddress} Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки буде зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам`, confirmOrder);
+    return ctx.wizard.next()
   } catch (error) {
     console.log(error)
   }
 })
 
-
-
 checkOrder.on('callback_query', async (ctx) => {
-  let status;
-  let response;
-  const id = ctx.wizard.state.data.id
-  const data = {}
-  switch (ctx.callbackQuery.data) {
-    case 'confirm':
-      ctx.wizard.state.data.orderStatus = 1;
-      data.status = ctx.wizard.state.data.orderStatus;
-      response = await updateOrder(data)
-      console.log(response)
-      ctx.reply('Заявка успешно создана!!')
-      break;
-    case 'cancel':
-      ctx.wizard.state.data.orderStatus = 4;
-      data.status = ctx.wizard.state.data.orderStatus
-      response = await updateOrder(data)
-      console.log(response)
-      ctx.reply('Заявка отменена!')
-      break;
-    default:
-      break;
-  }
   try {
-    ctx.reply('Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята')
-    const id = ctx.wizard.state.data.id;
-    ctx.session.state.orderId = id;
+    let response;
+    const data = { id: ctx.wizard.state.data.id }
+    switch (ctx.callbackQuery.data) {
+      case 'confirm':
+        ctx.wizard.state.data.orderStatus = 1;
+        data.status = ctx.wizard.state.data.orderStatus;
+        response = await updateOrder(data).then(() => {
+          ctx.reply('Заявка успешно создана!!')
+          ctx.reply('Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята')
+        })
+        const task = cron.schedule('* * * * * *', async () => {
+          response = await getOrder(data.id);
+          if (response.status === 2) {
+            ctx.reply('Заявка выполнена');
+            task.stop();
+            return ctx.scene.leave(); // Выйти из сцены после выполнения задачи
+          }
+          if (response.status === 3) {
+            ctx.reply('Заявка отменена');
+            task.stop();
+            return ctx.scene.leave(); // Выйти из сцены после выполнения задачи
+          }
+        });
+        break;
+      case 'cancel':
+        ctx.wizard.state.data.orderStatus = 4;
+        data.status = ctx.wizard.state.data.orderStatus
+        response = await updateOrder(data)
+        ctx.reply('Заявка отменена!')
+        break;
+      default:
+        break;
+    }
   } catch (error) {
     console.error('Error while editing message reply markup:', error);
   }
