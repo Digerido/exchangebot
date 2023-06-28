@@ -174,11 +174,10 @@ setAddress.on("text", async (ctx) => {
 
 })
 
-
 setEmail.email((/.*@.*\..*/, async (ctx) => {
   try {
     ctx.wizard.state.data.email = ctx.message.text;
-    await ctx.reply("Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже или введите его вручную.", phoneKeyboard);
+    await ctx.reply(ctx.i18n.t('addphonenumber'), phoneKeyboard);
     return ctx.wizard.next()
   }
   catch (error) {
@@ -199,6 +198,7 @@ createOrder.on('contact', async (ctx) => {
     ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
     const giveKey = ctx.wizard.state.data.giveValute.forms[0]["key"];
     const getKey = ctx.wizard.state.data.getValute.forms[0]["key"];
+
     const dataToSend = {
       status: 0,
       referal: null,
@@ -226,6 +226,7 @@ createOrder.on('contact', async (ctx) => {
         }
         : null,
     };
+    console.log('dataToSend = ', dataToSend)
     const response = await createTransaction(dataToSend);
     ctx.wizard.state.data.orderStatus = response.status;
     const giveAddress = response.giveValute.wallet.forms[0].description;
@@ -233,10 +234,9 @@ createOrder.on('contact', async (ctx) => {
     ctx.wizard.state.data.giveAddress = giveAddress;
     ctx.wizard.state.data.getAddress = getAddress;
     ctx.wizard.state.data.id = response._id
-    ctx.reply(ctx.i18n.t('confirmorder'), confirmOrderKeyboard);
+    await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
     return ctx.wizard.next()
   } catch (error) {
-    console.log(error)
     await ctx.reply(ctx.i18n.t('error'))
     return ctx.scene.leave();
   }
@@ -277,11 +277,12 @@ createOrder.on('text', async (ctx) => {
     };
 
     const response = await createTransaction(dataToSend);
+    console.log('resp = ', response)
     ctx.wizard.state.data.orderStatus = response.status;
     ctx.wizard.state.data.giveAddress = response.giveValute.wallet.forms[0].description;
     ctx.wizard.state.data.getAddress = response.getValute.wallet.forms[0]?.description || '';
     ctx.wizard.state.data.id = response._id
-    await ctx.reply(ctx.i18n.t('yourexchange'), { ctx }, confirmOrderKeyboard);
+    await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
     return ctx.wizard.next()
   } catch (error) {
     console.log(error)
@@ -292,6 +293,7 @@ createOrder.on('text', async (ctx) => {
 
 checkOrder.on('callback_query', async (ctx) => {
   try {
+    await ctx.editMessageReplyMarkup();
     let response;
     const data = { id: ctx.wizard.state.data.id }
     switch (ctx.callbackQuery.data) {
@@ -299,19 +301,19 @@ checkOrder.on('callback_query', async (ctx) => {
         ctx.wizard.state.data.orderStatus = 1;
         data.status = ctx.wizard.state.data.orderStatus;
         response = await updateOrder(data).then(() => {
-          ctx.reply('Заявка успешно создана! Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята')
+          ctx.reply(ctx.i18n.t('ordercreated'));
         })
         const task = cron.schedule('* * * * * *', async () => {
           response = await getOrder(data.id);
           if (response.status === 2) {
-            ctx.reply(`${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} отправлены на  ${ctx.wizard.state.data.getAddress}. Спасибо за обмен не забудьтее оставить отзыв на https://www.bestchange.ru/catbit-exchanger.html`);
+            ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder'));
             task.stop();
-            return ctx.scene.leave(); // Выйти из сцены после выполнения задачи
+            return ctx.scene.leave();
           }
           if (response.status === 3) {
-            ctx.replyWithHTML('Время инвойса закончилось для новой операции нажмите /start');
+            ctx.replyWithHTML(ctx.i18n.t('clientcancelorder'));
             task.stop();
-            return ctx.scene.leave(); // Выйти из сцены после выполнения задачи
+            return ctx.scene.leave();
           }
         });
         break;
@@ -319,7 +321,7 @@ checkOrder.on('callback_query', async (ctx) => {
         ctx.wizard.state.data.orderStatus = 4;
         data.status = ctx.wizard.state.data.orderStatus
         response = await updateOrder(data)
-        await ctx.replyWithHTML('Вы отменили заявку, напишите /start для возобновления')
+        await ctx.replyWithHTML(ctx.i18n.t('cancelorder'))
         return ctx.scene.leave();
       default:
         break;

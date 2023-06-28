@@ -10,7 +10,7 @@ const createKeyboard = async (filterFunc) => {
 };
 
 const giveValutesKeyboard = async () => {
-  return createKeyboard(valute => valute.bestchangeKey === 'BTC');
+  return createKeyboard(valute => valute.bestchangeKey === 'QWRUB');
 };
 
 const getValutesKeyboard = async () => {
