@@ -303,7 +303,7 @@ checkOrder.on('callback_query', async (ctx) => {
         response = await updateOrder(data).then(() => {
           ctx.reply(ctx.i18n.t('ordercreated'));
         })
-        const task = cron.schedule('* * * * * *', async () => {
+        const task = cron.schedule('*/1 * * * *', async () => {
           response = await getOrder(data.id);
           console.log('cron start')
           if (response.status === 2) {

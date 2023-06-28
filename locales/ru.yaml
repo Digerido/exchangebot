@@ -15,11 +15,11 @@ ifcrypto: |
 addphonenumber:
   Пожалуйста, предоставьте свой номер телефона, нажав кнопку ниже или введите его вручную.
 yourexchange: |
-  Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке на ${ctx.wizard.state.data.giveAddress}, ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} к получению ${ctx.wizard.state.data.getAddress}. Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки буде зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам
+  Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке на ${ctx.wizard.state.data.giveAddress}, ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} к получению ${ctx.wizard.state.data.address}. Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки буде зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам
 ordercreated: |
   Заявка успешно создана! Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята
 operatorconfirmorder: |
-  ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} отправлены на  ${ctx.wizard.state.data.getAddress}. Спасибо за обмен не забудьтее оставить отзыв на https://www.bestchange.ru/catbit-exchanger.html
+  ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} отправлены на  ${ctx.wizard.state.data.address}. Спасибо за обмен не забудьте оставить отзыв на https://www.bestchange.ru/catbit-exchanger.html
 clientcancelorder: |
   Вы отменили заявку, напишите /start для возобновления'
 cancelorder: |
