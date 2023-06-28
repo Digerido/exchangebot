@@ -16,13 +16,6 @@ const i18n = new TelegrafI18n({
 const token = process.env.BOT_TOKEN;
 const bot = new Telegraf(token);
 
-let chatIds = new Set();
-
-bot.use((ctx, next) => {
-  chatIds.add(ctx.chat.id);
-  return next();
-});
-
 bot.use(session());
 bot.use(i18n.middleware());
 const stage = new Scenes.Stage([exchange]);

@@ -18,8 +18,8 @@ const makeRequest = async (method, url, data = null) => {
             throw new Error("Response status was not successful: " + response.data);
         }
     } catch (error) {
-        console.error("Error making request: ", error.data);
-        throw error.data;
+        console.error("Error making request: ", error);
+        throw error;
     }
 }
 

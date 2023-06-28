@@ -2,3 +2,20 @@ selectgivevalute: |
   Приветствую. Я могу совершить обмен криптовалюты в Telegram. Пожалуйста, выберите тикер валюты, которую вы отдаете
 selectgetvalute: |
   Пожалуйста, напишите тикер валюты, которую вы получаете
+settingvalute: |
+  Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title} -> ${ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive} ${ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive} ${ctx.wizard.state.data.getValute.key}. Выберите валюту для пополнения
+inputsum: |
+  Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}
+preparetopay: |
+  Ваш обмен: ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute?.key} к отправке ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute?.key} к получению. Текущий курс ${ctx.wizard.state.data.giveValute?.course}/${ctx.wizard.state.data.getValute?.course}. Курс сделки будет зафиксирован в момент подтверждения отправки средств. Если подтверждаете ответьте - да
+ifbank: |
+  Внесите номер карты банка для получения средств. Проверьте корректность внесения, если номер карты банка будет содержать ошибку, администрация обменного пункта не несет ответственности.
+ifcrypto: |
+  Внесите адрес для получения средств. Проверьте корректность внесения, если адрес будет содержать ошибку, администрация обменного пункта не несет ответственности.
+confirmorder: |
+  Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке на ${giveAddress}, ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} к получению на ${getAddress}. Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки будет зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам
+yourexchange: | 
+  Ваш обмен ${ctx.wizard.state.data.giveAmount} ${ctx.wizard.state.data.giveValute.title} к отправке, ${ctx.wizard.state.data.giveAddress} ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title}, к получению ${ctx.wizard.state.data.getAddress} Текущий курс ${ctx.wizard.state.data.giveValute.course}/${ctx.wizard.state.data.getValute.course}. Курс сделки буде зафиксирован в момент подтверждения отправки средств. После получения средств мы оповестим об автоматической отправке по указанным вами реквизитам
+error: |
+  Произошла ошибка, свяжитесь с тех поддержкой
+
