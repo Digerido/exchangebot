@@ -305,13 +305,17 @@ checkOrder.on('callback_query', async (ctx) => {
         })
         const task = cron.schedule('* * * * * *', async () => {
           response = await getOrder(data.id);
+          console.log('cron start')
           if (response.status === 2) {
-            ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder'));
+            console.log('confirm!!')
+            ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
+            conso
             task.stop();
             return ctx.scene.leave();
           }
           if (response.status === 3) {
-            ctx.replyWithHTML(ctx.i18n.t('clientcancelorder'));
+            console.log('cancel!!')
+            ctx.replyWithHTML(ctx.i18n.t('cancelorder'));
             task.stop();
             return ctx.scene.leave();
           }
@@ -321,7 +325,7 @@ checkOrder.on('callback_query', async (ctx) => {
         ctx.wizard.state.data.orderStatus = 4;
         data.status = ctx.wizard.state.data.orderStatus
         response = await updateOrder(data)
-        await ctx.replyWithHTML(ctx.i18n.t('cancelorder'))
+        await ctx.replyWithHTML(ctx.i18n.t('clientcancelorder'))
         return ctx.scene.leave();
       default:
         break;
