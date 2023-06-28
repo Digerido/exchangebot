@@ -3,7 +3,7 @@ const { Extra, Markup, Scenes, Telegraf, session } = require('telegraf');
 const dotenv = require('dotenv');
 const exchange = require('./scenes/exchange');
 const TelegrafI18n = require('telegraf-i18n');
-const cron = require('node-cron');
+
 
 dotenv.config();
 
@@ -28,19 +28,5 @@ bot.use(i18n.middleware());
 const stage = new Scenes.Stage([exchange]);
 bot.use(stage.middleware());
 bot.start(ctx => ctx.scene.enter("exchange"));
-bot.use((ctx, next) => {
-  console.log('state =', ctx)
-  return next()
-});
-
-
-cron.schedule('*/1 * * * *', async () => {
-  let response = await getOrder();
-  chatIds.forEach(chatId => {
-    if (response.result.status === 3) {
-      bot.telegram.sendMessage(chatId, 'Сделка автоматически отменена по истечению 30 минут');
-    }
-  });
-});
 
 bot.launch();

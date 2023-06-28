@@ -10,18 +10,17 @@ const createKeyboard = async (filterFunc) => {
 };
 
 const giveValutesKeyboard = async () => {
-  return createKeyboard(valute => valute.bestchangeKey === 'BTC');
+  return createKeyboard(valute => valute.bestchangeKey === 'QWRUB');
 };
 
 const getValutesKeyboard = async () => {
-  return createKeyboard(valute => valute.isGet === true);
+  return createKeyboard(valute => valute.isGet === true && valute.isCash === false);
 };
 
 const selectedValutesKeyboard = (ctx) => {
-    console.log('klava = ',ctx.wizard.state.data.getValute.title)
     return Markup.inlineKeyboard(
-        [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: 'give' }],
-        [{ text: ctx.wizard.state.data.getValute.title, callback_data: 'get'}]]);
+        [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
+        [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey}]]);
   };
   
 
