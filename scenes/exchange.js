@@ -309,7 +309,6 @@ checkOrder.on('callback_query', async (ctx) => {
           if (response.status === 2) {
             console.log('confirm!!')
             ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
-            conso
             task.stop();
             return ctx.scene.leave();
           }
