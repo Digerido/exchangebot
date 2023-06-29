@@ -27,7 +27,6 @@ const selectGiveValute = new Composer()
 const selectGetValute = new Composer()
 const setValute = new Composer()
 const setAddress = new Composer()
-const setFullName = new Composer()
 const setEmail = new Composer()
 const createOrder = new Composer()
 const checkOrder = new Composer()
@@ -192,28 +191,6 @@ setAddress.on("callback_query", async (ctx) => {
     return ctx.scene.leave();
   }
 })
-
-//setFullName.on("text", async (ctx) => {
-//  try {
-//    ctx.wizard.state.data.firstName = ctx.message.text;
-//    await ctx.reply('Введите ваше имя');
-//  } catch (error) {
-//    console.log(error)
-//    await ctx.reply(ctx.i18n.t('error'))
-//    return ctx.scene.leave();
-//  }
-//}, "text", async (ctx) => {
-//  try {
-//    ctx.wizard.state.data.lastName = ctx.message.text;
-//    await ctx.reply('Введите вашу фамилию');
-//    return ctx.wizard.next()
-//  } catch (error) {
-//    console.log(error)
-//    await ctx.reply(ctx.i18n.t('error'))
-//    return ctx.scene.leave();
-//  }
-//})
-
 
 setAddress.on("text", async (ctx) => {
   try {
@@ -392,7 +369,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const exchange = new Scenes.WizardScene(
-  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setFullName, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = exchange;
