@@ -1,47 +1,42 @@
 const { valutes, crossRatesList } = require('../../services/index');
 const { Markup } = require('telegraf');
 
-const createKeyboard = async (filterFunc) => {
-  const valutesList = await valutes();
-  const filteredValutes = valutesList.filter(filterFunc)
+const createValuteButtons = (valutesList, filterFunc) =>
+  valutesList
+    .filter(filterFunc)
     .map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }]);
 
-  return Markup.inlineKeyboard(filteredValutes, { columns: 2 }).oneTime().resize();
-};
+const createKeyboard = (buttons) =>
+  Markup.inlineKeyboard(buttons, { columns: 2 }).oneTime().resize();
 
 const giveValutesKeyboard = async () => {
-  return createKeyboard(valute => valute.bestchangeKey === 'QWRUB');
+  const valutesList = await valutes();
+  const buttons = createValuteButtons(valutesList, valute => valute.bestchangeKey === 'QWRUB');
+  return createKeyboard(buttons);
 };
 
 const getValutesKeyboard = async () => {
   const response = await crossRatesList();
-  let crossRates = response.filter((cr) => {
-    return (cr.isActive === true &&
-      cr.from && cr.from.bestchangeKey === 'QWRUB' &&
-      cr.to && cr.to.categories.includes('crypto')
-    );
-  });
-  let bestchangeKeys = crossRates.map((cr) => {
-    return cr.to.bestchangeKey;
-  });
-  console.log(bestchangeKeys)
+  const bestchangeKeys = response
+    .filter(cr => cr.isActive === true && cr.from && cr.from.bestchangeKey === 'QWRUB' && cr.to && cr.to.categories.includes('crypto'))
+    .map(cr => cr.to.bestchangeKey);
+
   const valutesList = await valutes();
-  const filteredValutes = valutesList.filter(valute =>
-    valute.isGet === true &&
-    valute.isCash === false &&
-    bestchangeKeys.includes(valute.bestchangeKey) &&
-    valute.bestchangeKey != 'XRP'
-  ).map(valute => [{ text: valute.title, callback_data: valute.bestchangeKey }]);
-  return Markup.inlineKeyboard(filteredValutes, { columns: 2 }).oneTime().resize();
+  const buttons = createValuteButtons(
+    valutesList, 
+    valute => valute.isGet === true && valute.isCash === false && bestchangeKeys.includes(valute.bestchangeKey) && valute.bestchangeKey != 'XRP'
+  );
+
+  return createKeyboard(buttons);
 };
 
 const selectedValutesKeyboard = (ctx) => {
-  return Markup.inlineKeyboard(
-    [[{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
-    [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]]);
+  const buttons = [
+    [{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
+    [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]
+  ];
+
+  return createKeyboard(buttons);
 };
-
-
-
 
 module.exports = { giveValutesKeyboard, getValutesKeyboard, selectedValutesKeyboard };
