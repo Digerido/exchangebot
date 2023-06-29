@@ -147,17 +147,18 @@ setValute.on("text", async (ctx) => {
         await ctx.reply('Введенное значение меньше допустимого');
       } else {
         try {
+          console.log('choosenValute.bestchangeKey = ', choosenValute.bestchangeKey)
+          console.log('ctx.wizard.state.data.giveValute.bestchangeKey = ', ctx.wizard.state.data.giveValute.bestchangeKey)
           const { giveAmount, getAmount } = choosenValute.bestchangeKey === ctx.wizard.state.data.giveValute.bestchangeKey ? await setGiveAmount(ctx, userAmount) : await setGetAmount(ctx, userAmount)
           ctx.wizard.state.data.giveAmount = giveAmount;
           ctx.wizard.state.data.getAmount = getAmount;
+          await ctx.reply(ctx.i18n.t('preparetopay', { ctx }), prepareToPayKeyboard);
+          return ctx.wizard.next();
         } catch (error) {
           console.error('Error setting amounts:', error);
         }
-        await ctx.reply(ctx.i18n.t('preparetopay', { ctx }), prepareToPayKeyboard);
-        return ctx.wizard.next();
       }
     }
-
     else {
       await ctx.reply('Некорректное значение суммы пополнения');
     }
@@ -173,17 +174,18 @@ setAddress.on("callback_query", async (ctx) => {
   try {
     await ctx.answerCbQuery();
     await ctx.editMessageReplyMarkup();
+    console.log('ctx.callbackQuery.data = ', ctx.callbackQuery.data)
     if (ctx.callbackQuery.data === 'back') {
       await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
       return ctx.scene.leave();
     }
-    else if (ctx.wizard.state.data.getValute.categories.includes('bank')) {
-      await ctx.reply(ctx.i18n.t('ifbank'));
-    }
-    else {
-      await ctx.reply(ctx.i18n.t('ifcrypto'));
-    }
-
+    ctx.wizard.state.data.confirm = true;
+    //if (ctx.wizard.state.data.getValute.categories.includes('bank')) {
+    //  await ctx.reply(ctx.i18n.t('ifbank'));
+    //}
+    //else {
+    await ctx.reply(ctx.i18n.t('ifcrypto'));
+    //}
   }
   catch (error) {
     console.log(error)
@@ -192,11 +194,26 @@ setAddress.on("callback_query", async (ctx) => {
   }
 })
 
-setAddress.on("text", async (ctx) => {
+setAddress.command('cancel', async (ctx) => {
   try {
-    ctx.wizard.state.data.address = ctx.message.text;
-    await ctx.reply('Пожалуйста, введите email');
-    return ctx.wizard.next()
+    await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error)
+  }
+});
+
+setAddress.on("text", async (ctx) => {
+
+  try {
+    if (ctx.wizard.state.data.confirm) {
+      ctx.wizard.state.data.address = ctx.message.text;
+      await ctx.reply('Пожалуйста, введите email');
+      return ctx.wizard.next()
+    }
+    else{
+      return
+    }
   } catch (error) {
     console.log(error)
     await ctx.reply(ctx.i18n.t('error'))

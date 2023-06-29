@@ -14,7 +14,7 @@ const directExchangeRate = async (ctx) => {
             cr.to.bestchangeKey === ctx.wizard.state.data.getValute.bestchangeKey
         );
     });
-
+    console.log('crossRate = ',crossRate)
     if (crossRate) return 1 / crossRate.out;
     return (
         ctx.wizard.state.data.getValute &&
