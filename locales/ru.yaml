@@ -1,9 +1,11 @@
 selectgivevalute: |
-  Приветствую. Я могу совершить обмен криптовалюты в Telegram. Пожалуйста, выберите тикер валюты, которую вы отдаете
+  Приветствую. Я могу совершить обмен криптовалюты в Telegram. Пожалуйста, выберите тикер валюты, которую вы отдаете. для отмены на любом этапе до отправки средств введите - /cancel
 selectgetvalute: |
   Пожалуйста, напишите тикер валюты, которую вы получаете
 settingvalute: |
-  Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title} -> ${ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive} ${ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive} ${ctx.wizard.state.data.getValute.key}. Выберите валюту для пополнения
+  Вы выбрали направление: ${ctx.wizard.state.data.giveValute.title} -> ${ctx.wizard.state.data.getValute.title}. Минимальная сумма к обмену ${ctx.wizard.state.data.giveValute.minGive} ${ctx.wizard.state.data.giveValute.key} или ${ctx.wizard.state.data.getValute.minGive} ${ctx.wizard.state.data.getValute.key}. Мы можем расчитать прямой и обратный курс. Если вы хотите ОТПРАВИТЬ КОНКРЕТНУЮ СУММУ сумму, выберите валюту отдачи. Если вы хотите получить ПОЛУЧИТЬ КОНКРЕТНУЮ СУММУ, выберите валюту получения.
+cancelbeforeoder: |
+  Процедура отменена нажмите /start для возобновления
 inputsum: |
   Теперь введите сумму пополнения в ${ctx.wizard.state.data.choosenValute.title}
 preparetopay: |
@@ -19,10 +21,11 @@ yourexchange: |
 ordercreated: |
   Заявка успешно создана! Наш менеджер проверяет заявку. Это может занять некоторое время. Страница обновится автоматически, когда заявка будет принята
 operatorconfirmorder: |
-  ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} отправлены на  ${ctx.wizard.state.data.address}. Спасибо за обмен не забудьте оставить отзыв на https://www.bestchange.ru/catbit-exchanger.html
+  ${ctx.wizard.state.data.getAmount} ${ctx.wizard.state.data.getValute.title} отправлены на  ${ctx.wizard.state.data.address}. Спасибо за обмен! Ждем вас снова! Мы вышли на круглосуточный режим работы, можете писать нам в любое время, мы на связи 24/7. Так же хотим пригласить наш официальный канал https://t.me/+ghRKnvnsvh5lZGMy там вы можете следить за всеми новостями в мире криптовалюты, а так же за новостями нашего обменника. Не забудьте оставить отзыв на https://www.bestchange.ru/catbit-exchanger.html.
 clientcancelorder: |
   Вы отменили заявку, напишите /start для возобновления'
 cancelorder: |
-  Заявка отменена, для возобновления нажмите /start
+  Заявка отменена, для возобновления нажмите /start или свяжитесь с оператором @Cat_Bit в случае возникновения проблем
 error: |
-  Произошла ошибка, свяжитесь с тех поддержкой
+  Произошла ошибка, свяжитесь с оператором @Cat_Bit
+

@@ -27,11 +27,12 @@ const selectGiveValute = new Composer()
 const selectGetValute = new Composer()
 const setValute = new Composer()
 const setAddress = new Composer()
+const setFullName = new Composer()
 const setEmail = new Composer()
 const createOrder = new Composer()
 const checkOrder = new Composer()
 
-start.use(async (ctx) => {
+start.start(async (ctx) => {
   try {
     const giveValutes = await giveValutesKeyboard()
     ctx.wizard.state.data = new WizardData();
@@ -61,6 +62,25 @@ selectGiveValute.on("callback_query", async (ctx) => {
   }
 });
 
+selectGiveValute.command('cancel', async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error)
+  }
+});
+
+
+selectGetValute.command('cancel', async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error)
+  }
+});
+
 // выбрал валюту для получения и вывел две валюты для выбора оплаты
 selectGetValute.on("callback_query", async (ctx) => {
   try {
@@ -78,6 +98,7 @@ selectGetValute.on("callback_query", async (ctx) => {
     return ctx.scene.leave();
   }
 });
+
 
 ///может быть эту часть кода можно сделать красивее lol
 setValute.on('callback_query', async (ctx) => {
@@ -104,6 +125,15 @@ setValute.on('callback_query', async (ctx) => {
   }
 });
 ///
+
+setValute.command('cancel', async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error)
+  }
+});
 
 setValute.on("text", async (ctx) => {
   try {
@@ -145,7 +175,8 @@ setAddress.on("callback_query", async (ctx) => {
     await ctx.answerCbQuery();
     await ctx.editMessageReplyMarkup();
     if (ctx.callbackQuery.data === 'back') {
-      return ctx.scene.reenter();
+      await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
+      return ctx.scene.leave();
     }
     else if (ctx.wizard.state.data.getValute.categories.includes('bank')) {
       await ctx.reply(ctx.i18n.t('ifbank'));
@@ -153,6 +184,7 @@ setAddress.on("callback_query", async (ctx) => {
     else {
       await ctx.reply(ctx.i18n.t('ifcrypto'));
     }
+
   }
   catch (error) {
     console.log(error)
@@ -160,6 +192,28 @@ setAddress.on("callback_query", async (ctx) => {
     return ctx.scene.leave();
   }
 })
+
+//setFullName.on("text", async (ctx) => {
+//  try {
+//    ctx.wizard.state.data.firstName = ctx.message.text;
+//    await ctx.reply('Введите ваше имя');
+//  } catch (error) {
+//    console.log(error)
+//    await ctx.reply(ctx.i18n.t('error'))
+//    return ctx.scene.leave();
+//  }
+//}, "text", async (ctx) => {
+//  try {
+//    ctx.wizard.state.data.lastName = ctx.message.text;
+//    await ctx.reply('Введите вашу фамилию');
+//    return ctx.wizard.next()
+//  } catch (error) {
+//    console.log(error)
+//    await ctx.reply(ctx.i18n.t('error'))
+//    return ctx.scene.leave();
+//  }
+//})
+
 
 setAddress.on("text", async (ctx) => {
   try {
@@ -171,8 +225,8 @@ setAddress.on("text", async (ctx) => {
     await ctx.reply(ctx.i18n.t('error'))
     return ctx.scene.leave();
   }
-
 })
+
 
 setEmail.email((/.*@.*\..*/, async (ctx) => {
   try {
@@ -338,7 +392,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const exchange = new Scenes.WizardScene(
-  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setFullName, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = exchange;
