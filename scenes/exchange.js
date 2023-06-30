@@ -27,6 +27,7 @@ const selectGiveValute = new Composer()
 const selectGetValute = new Composer()
 const setValute = new Composer()
 const setAddress = new Composer()
+const setMemo = new Composer()
 const setEmail = new Composer()
 const createOrder = new Composer()
 const checkOrder = new Composer()
@@ -204,16 +205,35 @@ setAddress.command('cancel', async (ctx) => {
 });
 
 setAddress.on("text", async (ctx) => {
-
   try {
     if (ctx.wizard.state.data.confirm) {
       ctx.wizard.state.data.address = ctx.message.text;
-      await ctx.reply('Пожалуйста, введите email');
-      return ctx.wizard.next()
+      if (ctx.wizard.state.data.getValute.bestchangeKey === 'XRP') {
+        await ctx.reply('Пожалуйста, введите memo');
+        return ctx.wizard.next()
+      }
+      else {
+        await ctx.reply('Пожалуйста, введите email');
+        console.log(ctx.wizard.cursor)
+        return ctx.wizard.selectStep(6)
+      }
     }
-    else{
+    else {
       return
     }
+  } catch (error) {
+    console.log(error)
+    await ctx.reply(ctx.i18n.t('error'))
+    return ctx.scene.leave();
+  }
+})
+
+setMemo.on('text', async (ctx) => {
+  try {
+    ctx.wizard.state.data.memo = ctx.message.text;
+    console.log('memo = ', ctx.wizard.state.data.memo)
+    await ctx.reply('Пожалуйста, введите email');
+    return ctx.wizard.next()
   } catch (error) {
     console.log(error)
     await ctx.reply(ctx.i18n.t('error'))
@@ -269,12 +289,14 @@ createOrder.on('contact', async (ctx) => {
           forms: {
             result: ctx.wizard.state.data.getAmount,
             email: ctx.wizard.state.data.email,
-            [getKey]: ctx.wizard.state.data.address || ''
+            [getKey]: ctx.wizard.state.data.address || '',
+            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {})
           },
+
         }
         : null,
     };
-    console.log('dataToSend = ', dataToSend)
+
     const response = await createTransaction(dataToSend);
     ctx.wizard.state.data.orderStatus = response.status;
     const giveAddress = response.giveValute.wallet.forms[0].description;
@@ -318,14 +340,15 @@ createOrder.on('text', async (ctx) => {
           forms: {
             result: ctx.wizard.state.data.getAmount,
             email: ctx.wizard.state.data.email,
-            [getKey]: ctx.wizard.state.data.address || ''
+            [getKey]: ctx.wizard.state.data.address || '',
+            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {})
           },
         }
         : null,
     };
-
+    console.log('getKey', getKey)
+    console.log('dataToSendforms = ', dataToSend)
     const response = await createTransaction(dataToSend);
-    console.log('resp = ', response)
     ctx.wizard.state.data.orderStatus = response.status;
     ctx.wizard.state.data.giveAddress = response.giveValute.wallet.forms[0].description;
     ctx.wizard.state.data.getAddress = response.getValute.wallet.forms[0]?.description || '';
@@ -386,7 +409,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const exchange = new Scenes.WizardScene(
-  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setMemo, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = exchange;

@@ -24,8 +24,7 @@ const getValutesKeyboard = async () => {
   const valutesList = await valutes();
   const buttons = createValuteButtons(
     valutesList, 
-    valute => valute.isGet === true && valute.isCash === false && bestchangeKeys.includes(valute.bestchangeKey) && valute.bestchangeKey != 'XRP'
-  );
+    valute => valute.isGet === true && valute.isCash === false && bestchangeKeys.includes(valute.bestchangeKey));
 
   return createKeyboard(buttons);
 };
