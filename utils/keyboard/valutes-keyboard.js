@@ -18,7 +18,7 @@ const giveValutesKeyboard = async () => {
 const getValutesKeyboard = async () => {
   const response = await crossRatesList();
   const bestchangeKeys = response
-    .filter(cr => cr.isActive === true && cr.from && cr.from.bestchangeKey === 'QWRUB' && cr.to && cr.to.categories.includes('crypto'))
+    .filter(cr => cr.isActive === true && cr.from && cr.from.bestchangeKey === 'QWRUB')
     .map(cr => cr.to.bestchangeKey);
 
   const valutesList = await valutes();

@@ -28,6 +28,7 @@ const selectGetValute = new Composer()
 const setValute = new Composer()
 const setAddress = new Composer()
 const setMemo = new Composer()
+const setFullName = new Composer()
 const setEmail = new Composer()
 const createOrder = new Composer()
 const checkOrder = new Composer()
@@ -175,18 +176,17 @@ setAddress.on("callback_query", async (ctx) => {
   try {
     await ctx.answerCbQuery();
     await ctx.editMessageReplyMarkup();
-    console.log('ctx.callbackQuery.data = ', ctx.callbackQuery.data)
     if (ctx.callbackQuery.data === 'back') {
       await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
       return ctx.scene.leave();
     }
     ctx.wizard.state.data.confirm = true;
-    //if (ctx.wizard.state.data.getValute.categories.includes('bank')) {
-    //  await ctx.reply(ctx.i18n.t('ifbank'));
-    //}
-    //else {
-    await ctx.reply(ctx.i18n.t('ifcrypto'));
-    //}
+    if (ctx.wizard.state.data.getValute.categories.includes('bank')) {
+      await ctx.reply(ctx.i18n.t('ifbank'));
+    }
+    else {
+      await ctx.reply(ctx.i18n.t('ifcrypto'));
+    }
   }
   catch (error) {
     console.log(error)
@@ -212,10 +212,15 @@ setAddress.on("text", async (ctx) => {
         await ctx.reply('Пожалуйста, введите memo');
         return ctx.wizard.next()
       }
+      else if (ctx.wizard.state.data.getValute.bestchangeKey === 'UPCNY' || ctx.wizard.state.data.getValute.bestchangeKey === 'CARDCNY') {
+        await ctx.reply('Введите ваше полное имя в формате (имя и фамилия)');
+        console.log(ctx.wizard.cursor)
+        return ctx.wizard.selectStep(6)
+      }
       else {
         await ctx.reply('Пожалуйста, введите email');
         console.log(ctx.wizard.cursor)
-        return ctx.wizard.selectStep(6)
+        return ctx.wizard.selectStep(7)
       }
     }
     else {
@@ -241,6 +246,20 @@ setMemo.on('text', async (ctx) => {
   }
 })
 
+setFullName.on("text", async (ctx) => {
+  const fullName = ctx.message.text;
+  const namePattern = /^[a-zA-Zа-яА-Я]+ [a-zA-Zа-яА-Я]+$/; // This pattern matches a string containing exactly two words
+  if (!namePattern.test(fullName)) {
+    // If the name doesn't match the pattern, inform the user and return without proceeding
+    return ctx.reply('Пожалуйста, введите ваше полное имя в формате (имя и фамилия).');
+  }
+  else {
+    ctx.wizard.state.data.fullName = fullName;
+    await ctx.reply('Пожалуйста, введите email');
+    return ctx.wizard.next()
+  }
+  // If the name does match the pattern, proceed as normal...
+});
 
 setEmail.email((/.*@.*\..*/, async (ctx) => {
   try {
@@ -290,7 +309,9 @@ createOrder.on('contact', async (ctx) => {
             result: ctx.wizard.state.data.getAmount,
             email: ctx.wizard.state.data.email,
             [getKey]: ctx.wizard.state.data.address || '',
-            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {})
+            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {}),
+            ...(ctx.wizard.state.data.fullName ? { 'imya,_familiya_poluchatelya': ctx.wizard.state.data.fullName } : {})
+
           },
 
         }
@@ -341,7 +362,8 @@ createOrder.on('text', async (ctx) => {
             result: ctx.wizard.state.data.getAmount,
             email: ctx.wizard.state.data.email,
             [getKey]: ctx.wizard.state.data.address || '',
-            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {})
+            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {}),
+            ...(ctx.wizard.state.data.fullName ? { 'imya,_familiya_poluchatelya': ctx.wizard.state.data.fullName } : {})
           },
         }
         : null,
@@ -409,7 +431,7 @@ checkOrder.on('callback_query', async (ctx) => {
 
 
 const exchange = new Scenes.WizardScene(
-  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setMemo, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
+  "exchange", start, selectGiveValute, selectGetValute, setValute, setAddress, setMemo, setFullName, setEmail, createOrder, checkOrder  // Our wizard scene id, which we will use to enter the scene
 );
 
 module.exports = exchange;
