@@ -31,8 +31,8 @@ const getValutesKeyboard = async () => {
 
 const selectedValutesKeyboard = (ctx) => {
   const buttons = [
-    [{ text: ctx.wizard.state.data.giveValute.title, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
-    [{ text: ctx.wizard.state.data.getValute.title, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]
+    [{ text: `Отдать ${ctx.wizard.state.data.giveValute.title}`, callback_data: ctx.wizard.state.data.giveValute.bestchangeKey }],
+    [{ text: `Получить ${ctx.wizard.state.data.getValute.title}`, callback_data: ctx.wizard.state.data.getValute.bestchangeKey }]
   ];
 
   return createKeyboard(buttons);

@@ -33,7 +33,7 @@ const setEmail = new Composer()
 const createOrder = new Composer()
 const checkOrder = new Composer()
 
-start.start(async (ctx) => {
+start.use(async (ctx) => {
   try {
     const giveValutes = await giveValutesKeyboard()
     ctx.wizard.state.data = new WizardData();
@@ -276,7 +276,7 @@ setEmail.on('text', async (ctx) => {
   await ctx.reply("Некорректный email")
 })
 
-
+///Пока что так
 ///если пользователь отправил свой номер qiwi контактом
 createOrder.on('contact', async (ctx) => {
   try {
@@ -316,7 +316,7 @@ createOrder.on('contact', async (ctx) => {
         : null,
     };
 
-    const response = await createTransaction(dataToSend);
+    let response = await createTransaction(dataToSend);
     ctx.wizard.state.data.orderStatus = response.status;
     const giveAddress = response.giveValute.wallet.forms[0].description;
     const getAddress = response.getValute.wallet.forms[0]?.description || '';
@@ -324,6 +324,45 @@ createOrder.on('contact', async (ctx) => {
     ctx.wizard.state.data.getAddress = getAddress;
     ctx.wizard.state.data.id = response._id
     await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
+    const checkPayment = cron.schedule('*/1 * * * *', async () => {
+      console.log('check')
+      response = await getOrder(data.id);
+      switch (response.status) {
+        case 1:
+          ctx.reply(ctx.i18n.t('ordercreated', { ctx }))
+          checkPayment.stop();
+        case 3:
+          console.log('cancel!!')
+          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
+          checkPayment.stop();
+          return ctx.scene.leave();
+      }
+    });
+
+    const resultPayment = cron.schedule('*/1 * * * *', async () => {
+      response = await getOrder(data.id);
+      switch (response.status) {
+        case 2:
+          console.log('confirm!!')
+          if (response.resultMessage != '') {
+            ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
+          }
+          ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
+          resultPayment.stop();
+          return ctx.scene.leave();
+        case 3:
+          console.log('cancel!!')
+          if (response.resultMessage != '') {
+            ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
+          }
+          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
+          resultPayment.stop();
+          return ctx.scene.leave();
+      }
+    });
+
+    ctx.wizard.state.data.checkPayment = checkPayment;
+    ctx.wizard.state.data.resultPayment = resultPayment;
     return ctx.wizard.next()
   } catch (error) {
     await ctx.reply(ctx.i18n.t('error'))
@@ -341,6 +380,7 @@ createOrder.on('text', async (ctx) => {
       status: 0,
       referal: null,
       isCrypto: false,
+      source: 'TELEGRAM BOT',
       ip: "192.168.1.1",
       ua: null,
       give: ctx.wizard.state.data.giveValute
@@ -366,16 +406,52 @@ createOrder.on('text', async (ctx) => {
         }
         : null,
     };
-    console.log('getKey', getKey)
-    console.log('dataToSendforms = ', dataToSend)
-    const response = await createTransaction(dataToSend);
+    let response = await createTransaction(dataToSend);
     ctx.wizard.state.data.orderStatus = response.status;
     ctx.wizard.state.data.giveAddress = response.giveValute.wallet.forms[0].description;
     ctx.wizard.state.data.getAddress = response.getValute.wallet.forms[0]?.description || '';
     ctx.wizard.state.data.id = response._id
     ctx.wizard.state.data.url = response.url
-    console.log('find url = ',response)
     await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
+    const checkPayment = cron.schedule('*/1 * * * *', async () => {
+      console.log('check')
+      response = await getOrder(data.id);
+      switch (response.status) {
+        case 1:
+          ctx.reply(ctx.i18n.t('ordercreated', { ctx }))
+          checkPayment.stop();
+        case 3:
+          console.log('cancel!!')
+          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
+          checkPayment.stop();
+          return ctx.scene.leave();
+      }
+    });
+
+    const resultPayment = cron.schedule('*/1 * * * *', async () => {
+      response = await getOrder(data.id);
+      switch (response.status) {
+        case 2:
+          console.log('confirm!!')
+          if (response.resultMessage != '') {
+            ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
+          }
+          ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
+          resultPayment.stop();
+          return ctx.scene.leave();
+        case 3:
+          console.log('cancel!!')
+          if (response.resultMessage != '') {
+            ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
+          }
+          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
+          resultPayment.stop();
+          return ctx.scene.leave();
+      }
+    });
+
+    ctx.wizard.state.data.checkPayment = checkPayment;
+    ctx.wizard.state.data.resultPayment = resultPayment;
     return ctx.wizard.next()
   } catch (error) {
     console.log(error)
@@ -386,39 +462,11 @@ createOrder.on('text', async (ctx) => {
 
 checkOrder.on('callback_query', async (ctx) => {
   try {
+    ctx.wizard.state.data.checkPayment.stop()
+    ctx.wizard.state.data.resultPayment.stop()
     await ctx.editMessageReplyMarkup();
-    let response;
     const data = { id: ctx.wizard.state.data.id }
     switch (ctx.callbackQuery.data) {
-      case 'confirm':
-        ctx.wizard.state.data.orderStatus = 1;
-        data.status = ctx.wizard.state.data.orderStatus;
-        response = await updateOrder(data).then(() => {
-          ctx.reply(ctx.i18n.t('ordercreated'));
-        })
-        const task = cron.schedule('*/1 * * * *', async () => {
-          response = await getOrder(data.id);
-          console.log('cron start = ', response)
-          if (response.status === 2) {
-            console.log('confirm!!')
-            if (response.resultMessage != '') {
-              ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
-            }
-            ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
-            task.stop();
-            return ctx.scene.leave();
-          }
-          if (response.status === 3) {
-            console.log('cancel!!')
-            if (response.resultMessage != '') {
-              ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
-            }
-            ctx.replyWithHTML(ctx.i18n.t('cancelorder'));
-            task.stop();
-            return ctx.scene.leave();
-          }
-        });
-        break;
       case 'cancel':
         ctx.wizard.state.data.orderStatus = 4;
         data.status = ctx.wizard.state.data.orderStatus
@@ -426,7 +474,7 @@ checkOrder.on('callback_query', async (ctx) => {
         await ctx.replyWithHTML(ctx.i18n.t('clientcancelorder'))
         return ctx.scene.leave();
       default:
-        break;
+        return ctx.scene.leave();
     }
   } catch (error) {
     console.log(error);
