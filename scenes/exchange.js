@@ -72,7 +72,6 @@ selectGiveValute.command('cancel', async (ctx) => {
   }
 });
 
-
 selectGetValute.command('cancel', async (ctx) => {
   try {
     await ctx.reply(ctx.i18n.t('cancelbeforeoder'))
@@ -99,7 +98,6 @@ selectGetValute.on("callback_query", async (ctx) => {
     return ctx.scene.leave();
   }
 });
-
 
 ///может быть эту часть кода можно сделать красивее lol
 setValute.on('callback_query', async (ctx) => {
@@ -375,6 +373,8 @@ createOrder.on('text', async (ctx) => {
     ctx.wizard.state.data.giveAddress = response.giveValute.wallet.forms[0].description;
     ctx.wizard.state.data.getAddress = response.getValute.wallet.forms[0]?.description || '';
     ctx.wizard.state.data.id = response._id
+    ctx.wizard.state.data.url = response.url
+    console.log('find url = ',response)
     await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
     return ctx.wizard.next()
   } catch (error) {
@@ -398,15 +398,21 @@ checkOrder.on('callback_query', async (ctx) => {
         })
         const task = cron.schedule('*/1 * * * *', async () => {
           response = await getOrder(data.id);
-          console.log('cron start')
+          console.log('cron start = ', response)
           if (response.status === 2) {
             console.log('confirm!!')
+            if (response.resultMessage != '') {
+              ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
+            }
             ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
             task.stop();
             return ctx.scene.leave();
           }
           if (response.status === 3) {
             console.log('cancel!!')
+            if (response.resultMessage != '') {
+              ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
+            }
             ctx.replyWithHTML(ctx.i18n.t('cancelorder'));
             task.stop();
             return ctx.scene.leave();
