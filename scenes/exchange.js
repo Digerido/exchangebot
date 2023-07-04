@@ -210,14 +210,14 @@ setAddress.on("text", async (ctx) => {
           // Valid card number
           ctx.wizard.state.data.address = ctx.message.text;
         }
-        else{
+        else {
           await ctx.reply('Некорректный номер карты');
           return
         }
       }
       ctx.wizard.state.data.address = ctx.message.text;
 
-      
+
       if (ctx.wizard.state.data.getValute.bestchangeKey === 'XRP') {
         await ctx.reply('Пожалуйста, введите memo');
         return ctx.wizard.next()
@@ -290,104 +290,7 @@ setEmail.on('text', async (ctx) => {
 
 ///Пока что так, два дубликата для ввода номера
 ///если пользователь отправил свой номер qiwi контактом
-createOrder.on('contact', async (ctx) => {
-  try {
-    ctx.wizard.state.data.phone = ctx.message.contact.phone_number;
-    const giveKey = ctx.wizard.state.data.giveValute.forms[0]["key"];
-    const getKey = ctx.wizard.state.data.getValute.forms[0]["key"];
-
-    const dataToSend = {
-      status: 0,
-      referal: null,
-      isCrypto: false,
-      source: 'telegram',
-      ip: "192.168.1.1",
-      ua: null,
-      give: ctx.wizard.state.data.giveValute
-        ? {
-          valute_id: ctx.wizard.state.data.giveValute._id,
-          forms: {
-            count: ctx.wizard.state.data.giveAmount,
-            [giveKey]: ctx.wizard.state.data.phone || ''
-          },
-        }
-        : null,
-      get: ctx.wizard.state.data.getValute
-        ? {
-          valute_id: ctx.wizard.state.data.getValute._id,
-          isCash: false,
-          forms: {
-            result: ctx.wizard.state.data.getAmount,
-            email: ctx.wizard.state.data.email,
-            [getKey]: ctx.wizard.state.data.address || '',
-            ...(ctx.wizard.state.data.memo ? { 'memo,_tag': ctx.wizard.state.data.memo } : {}),
-            ...(ctx.wizard.state.data.fullName ? { 'imya,_familiya_poluchatelya': ctx.wizard.state.data.fullName } : {})
-
-          },
-
-        }
-        : null,
-    };
-
-    let response = await createTransaction(dataToSend);
-    ctx.wizard.state.data.orderStatus = response.status;
-    const giveAddress = response.giveValute.wallet.forms[0].description;
-    const getAddress = response.getValute.wallet.forms[0]?.description || '';
-    ctx.wizard.state.data.giveAddress = giveAddress;
-    ctx.wizard.state.data.getAddress = getAddress;
-    ctx.wizard.state.data.id = response._id
-    await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
-    const checkPayment = cron.schedule('* * * * *', async () => {
-      console.log('check')
-      response = await getOrder(ctx.wizard.state.data.id);
-      console.log('stattus = ',response.status)
-      switch (response.status) {
-        case 1:
-          ctx.reply(ctx.i18n.t('ordercreated', { ctx }));
-          checkPayment.stop();
-          break;
-        case 3:
-          console.log('cancel!!');
-          ctx.replyWithHTML(ctx.i18n.t('timecancelorder', { ctx }));
-          checkPayment.stop();
-          ctx.scene.leave();
-          break;
-    }    
-    });
-
-    const resultPayment = cron.schedule('* * * * *', async () => {
-      response = await getOrder(ctx.wizard.state.data.id);
-      switch (response.status) {
-        case 2:
-          console.log('confirm!!')
-          if (response.resultMessage != '') {
-            ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
-          }
-          ctx.replyWithHTML(ctx.i18n.t('operatorconfirmorder', { ctx }));
-          resultPayment.stop();
-          return ctx.scene.leave();
-        case 3:
-          console.log('cancel!!')
-          if (response.resultMessage != '') {
-            ctx.reply(`Сообщение от оператора: ${response.resultMessage}`)
-          }
-          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
-          resultPayment.stop();
-          return ctx.scene.leave();
-      }
-    });
-
-    ctx.wizard.state.data.checkPayment = checkPayment;
-    ctx.wizard.state.data.resultPayment = resultPayment;
-    return ctx.wizard.next()
-  } catch (error) {
-    await ctx.reply(ctx.i18n.t('error'))
-    return ctx.scene.leave();
-  }
-})
-
-///если пользователь отправил свой номер qiwi текстом
-createOrder.on('text', async (ctx) => {
+async function sendData(ctx) {
   try {
     ctx.wizard.state.data.phone = ctx.message.text;
     const giveKey = ctx.wizard.state.data.giveValute.forms[0]["key"];
@@ -432,7 +335,7 @@ createOrder.on('text', async (ctx) => {
     const checkPayment = cron.schedule('* * * * *', async () => {
       console.log('check')
       response = await getOrder(ctx.wizard.state.data.id);
-      console.log('stattus = ',response.status)
+      console.log('stattus = ', response.status)
       switch (response.status) {
         case 1:
           ctx.reply(ctx.i18n.t('ordercreated', { ctx }));
@@ -444,7 +347,7 @@ createOrder.on('text', async (ctx) => {
           checkPayment.stop();
           ctx.scene.leave();
           break;
-    }    
+      }
     });
 
     const resultPayment = cron.schedule('* * * * *', async () => {
@@ -477,6 +380,14 @@ createOrder.on('text', async (ctx) => {
     await ctx.reply(ctx.i18n.t('error'))
     return ctx.scene.leave();
   }
+}
+createOrder.on('contact', async (ctx) => {
+  await sendData(ctx)
+})
+
+///если пользователь отправил свой номер qiwi текстом
+createOrder.on('text', async (ctx) => {
+  await sendData(ctx)
 })
 
 checkOrder.on('callback_query', async (ctx) => {
