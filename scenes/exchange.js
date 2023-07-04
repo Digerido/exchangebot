@@ -205,7 +205,19 @@ setAddress.command('cancel', async (ctx) => {
 setAddress.on("text", async (ctx) => {
   try {
     if (ctx.wizard.state.data.confirm) {
+      if (ctx.wizard.state.data.getValute.categories.includes('bank')) {
+        if (/^\d{16}$/.test(ctx.message.text)) {
+          // Valid card number
+          ctx.wizard.state.data.address = ctx.message.text;
+        }
+        else{
+          await ctx.reply('Некорректный номер карты');
+          return
+        }
+      }
       ctx.wizard.state.data.address = ctx.message.text;
+
+      
       if (ctx.wizard.state.data.getValute.bestchangeKey === 'XRP') {
         await ctx.reply('Пожалуйста, введите memo');
         return ctx.wizard.next()
@@ -276,7 +288,7 @@ setEmail.on('text', async (ctx) => {
   await ctx.reply("Некорректный email")
 })
 
-///Пока что так
+///Пока что так, два дубликата для ввода номера
 ///если пользователь отправил свой номер qiwi контактом
 createOrder.on('contact', async (ctx) => {
   try {
@@ -324,23 +336,26 @@ createOrder.on('contact', async (ctx) => {
     ctx.wizard.state.data.getAddress = getAddress;
     ctx.wizard.state.data.id = response._id
     await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
-    const checkPayment = cron.schedule('*/1 * * * *', async () => {
+    const checkPayment = cron.schedule('* * * * *', async () => {
       console.log('check')
-      response = await getOrder(data.id);
+      response = await getOrder(ctx.wizard.state.data.id);
+      console.log('stattus = ',response.status)
       switch (response.status) {
         case 1:
-          ctx.reply(ctx.i18n.t('ordercreated', { ctx }))
+          ctx.reply(ctx.i18n.t('ordercreated', { ctx }));
           checkPayment.stop();
+          break;
         case 3:
-          console.log('cancel!!')
-          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
+          console.log('cancel!!');
+          ctx.replyWithHTML(ctx.i18n.t('timecancelorder', { ctx }));
           checkPayment.stop();
-          return ctx.scene.leave();
-      }
+          ctx.scene.leave();
+          break;
+    }    
     });
 
-    const resultPayment = cron.schedule('*/1 * * * *', async () => {
-      response = await getOrder(data.id);
+    const resultPayment = cron.schedule('* * * * *', async () => {
+      response = await getOrder(ctx.wizard.state.data.id);
       switch (response.status) {
         case 2:
           console.log('confirm!!')
@@ -413,23 +428,26 @@ createOrder.on('text', async (ctx) => {
     ctx.wizard.state.data.id = response._id
     ctx.wizard.state.data.url = response.url
     await ctx.reply(ctx.i18n.t('yourexchange', { ctx }), confirmOrderKeyboard);
-    const checkPayment = cron.schedule('*/1 * * * *', async () => {
+    const checkPayment = cron.schedule('* * * * *', async () => {
       console.log('check')
-      response = await getOrder(data.id);
+      response = await getOrder(ctx.wizard.state.data.id);
+      console.log('stattus = ',response.status)
       switch (response.status) {
         case 1:
-          ctx.reply(ctx.i18n.t('ordercreated', { ctx }))
+          ctx.reply(ctx.i18n.t('ordercreated', { ctx }));
           checkPayment.stop();
+          break;
         case 3:
-          console.log('cancel!!')
-          ctx.replyWithHTML(ctx.i18n.t('cancelorder', { ctx }));
+          console.log('cancel!!');
+          ctx.replyWithHTML(ctx.i18n.t('timecancelorder', { ctx }));
           checkPayment.stop();
-          return ctx.scene.leave();
-      }
+          ctx.scene.leave();
+          break;
+    }    
     });
 
-    const resultPayment = cron.schedule('*/1 * * * *', async () => {
-      response = await getOrder(data.id);
+    const resultPayment = cron.schedule('* * * * *', async () => {
+      response = await getOrder(ctx.wizard.state.data.id);
       switch (response.status) {
         case 2:
           console.log('confirm!!')
