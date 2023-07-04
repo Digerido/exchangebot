@@ -300,6 +300,7 @@ createOrder.on('contact', async (ctx) => {
       status: 0,
       referal: null,
       isCrypto: false,
+      source: 'telegram',
       ip: "192.168.1.1",
       ua: null,
       give: ctx.wizard.state.data.giveValute
@@ -395,7 +396,7 @@ createOrder.on('text', async (ctx) => {
       status: 0,
       referal: null,
       isCrypto: false,
-      source: 'TELEGRAM BOT',
+      source: 'telegram',
       ip: "192.168.1.1",
       ua: null,
       give: ctx.wizard.state.data.giveValute
